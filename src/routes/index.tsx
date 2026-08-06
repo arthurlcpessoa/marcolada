@@ -68,7 +68,7 @@ function Home() {
         </div>
       </section>
 
-      <div className="mx-auto -mt-16 max-w-5xl space-y-6 px-4">
+      <div className="relative z-10 mx-auto -mt-16 max-w-5xl space-y-6 px-4">
         <div className="surface grid gap-3 p-4 sm:grid-cols-2">
           {hydrated && activePelada ? (
             <>
