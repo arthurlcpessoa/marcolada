@@ -10,33 +10,128 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as HistoricoRouteImport } from './routes/historico'
+import { Route as JogadoresRouteImport } from './routes/jogadores'
+import { Route as NovaRouteImport } from './routes/nova'
+import { Route as PartidaRouteImport } from './routes/partida'
+import { Route as TimesRouteImport } from './routes/times'
+import { Route as ResumoIdRouteImport } from './routes/resumo.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoricoRoute = HistoricoRouteImport.update({
+  id: '/historico',
+  path: '/historico',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JogadoresRoute = JogadoresRouteImport.update({
+  id: '/jogadores',
+  path: '/jogadores',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NovaRoute = NovaRouteImport.update({
+  id: '/nova',
+  path: '/nova',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartidaRoute = PartidaRouteImport.update({
+  id: '/partida',
+  path: '/partida',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TimesRoute = TimesRouteImport.update({
+  id: '/times',
+  path: '/times',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResumoIdRoute = ResumoIdRouteImport.update({
+  id: '/resumo/$id',
+  path: '/resumo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/historico': typeof HistoricoRoute
+  '/jogadores': typeof JogadoresRoute
+  '/nova': typeof NovaRoute
+  '/partida': typeof PartidaRoute
+  '/times': typeof TimesRoute
+  '/resumo/$id': typeof ResumoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/historico': typeof HistoricoRoute
+  '/jogadores': typeof JogadoresRoute
+  '/nova': typeof NovaRoute
+  '/partida': typeof PartidaRoute
+  '/times': typeof TimesRoute
+  '/resumo/$id': typeof ResumoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRoute
+  '/historico': typeof HistoricoRoute
+  '/jogadores': typeof JogadoresRoute
+  '/nova': typeof NovaRoute
+  '/partida': typeof PartidaRoute
+  '/times': typeof TimesRoute
+  '/resumo/$id': typeof ResumoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/historico'
+    | '/jogadores'
+    | '/nova'
+    | '/partida'
+    | '/times'
+    | '/resumo/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/historico'
+    | '/jogadores'
+    | '/nova'
+    | '/partida'
+    | '/times'
+    | '/resumo/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/historico'
+    | '/jogadores'
+    | '/nova'
+    | '/partida'
+    | '/times'
+    | '/resumo/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DashboardRoute: typeof DashboardRoute
+  HistoricoRoute: typeof HistoricoRoute
+  JogadoresRoute: typeof JogadoresRoute
+  NovaRoute: typeof NovaRoute
+  PartidaRoute: typeof PartidaRoute
+  TimesRoute: typeof TimesRoute
+  ResumoIdRoute: typeof ResumoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +143,68 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historico': {
+      id: '/historico'
+      path: '/historico'
+      fullPath: '/historico'
+      preLoaderRoute: typeof HistoricoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jogadores': {
+      id: '/jogadores'
+      path: '/jogadores'
+      fullPath: '/jogadores'
+      preLoaderRoute: typeof JogadoresRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nova': {
+      id: '/nova'
+      path: '/nova'
+      fullPath: '/nova'
+      preLoaderRoute: typeof NovaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partida': {
+      id: '/partida'
+      path: '/partida'
+      fullPath: '/partida'
+      preLoaderRoute: typeof PartidaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/times': {
+      id: '/times'
+      path: '/times'
+      fullPath: '/times'
+      preLoaderRoute: typeof TimesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/resumo/$id': {
+      id: '/resumo/$id'
+      path: '/resumo/$id'
+      fullPath: '/resumo/$id'
+      preLoaderRoute: typeof ResumoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DashboardRoute: DashboardRoute,
+  HistoricoRoute: HistoricoRoute,
+  JogadoresRoute: JogadoresRoute,
+  NovaRoute: NovaRoute,
+  PartidaRoute: PartidaRoute,
+  TimesRoute: TimesRoute,
+  ResumoIdRoute: ResumoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
