@@ -105,6 +105,11 @@ function MatchSetup({ pelada, onStart }: { pelada: Pelada; onStart: (a: Team, b:
   const [b, setB] = useState<string>(last?.teamBId ?? teams[1]?.id ?? "");
   const [confirmEnd, setConfirmEnd] = useState(false);
 
+  useEffect(() => {
+    if (!a && teams[0]) setA(last?.teamAId ?? teams[0].id);
+    if (!b && teams[1]) setB(last?.teamBId ?? teams[1].id);
+  }, [a, b, teams, last]);
+
   const teamA = teams.find((t) => t.id === a);
   const teamB = teams.find((t) => t.id === b);
   const played = pelada.matches.filter((m) => m.status === "finished");
