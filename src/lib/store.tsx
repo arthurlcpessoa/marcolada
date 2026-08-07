@@ -30,6 +30,7 @@ type Ctx = {
   updateMarcolada: (id: string, fn: (p: Marcolada) => Marcolada, label?: string) => void;
   deleteMarcolada: (id: string) => void;
   addPlayer: (p: Omit<Player, "id">) => Player;
+  updatePlayer: (id: string, patch: Partial<Omit<Player, "id">>) => void;
 };
 
 const StoreContext = createContext<Ctx | null>(null);
@@ -96,6 +97,16 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [update],
   );
 
+  const updatePlayer = useCallback(
+    (id: string, patch: Partial<Omit<Player, "id">>) => {
+      update((d) => ({
+        ...d,
+        players: d.players.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+      }));
+    },
+    [update],
+  );
+
   const value = useMemo<Ctx>(
     () => ({
       db,
@@ -109,8 +120,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       updateMarcolada,
       deleteMarcolada,
       addPlayer,
+      updatePlayer,
     }),
-    [db, hydrated, update, undo, stack, updateMarcolada, deleteMarcolada, addPlayer],
+    [db, hydrated, update, undo, stack, updateMarcolada, deleteMarcolada, addPlayer, updatePlayer],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
