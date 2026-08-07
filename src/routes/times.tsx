@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Crown, Palette, Plus, Shuffle, Users, X } from "lucide-react";
+import { Crown, Palette, Plus, Shuffle, Star, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { Avatar, EmptyState, PageHeader, TeamDot } from "@/components/marcolada";
 import { Button } from "@/components/ui/button";
@@ -338,6 +338,16 @@ function TeamCard({
         >
           <X className="h-4 w-4" />
         </button>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 text-xs font-semibold text-muted-foreground">
+        <span>
+          {players.length} {players.length === 1 ? "jogador" : "jogadores"}
+        </span>
+        <span className="inline-flex items-center gap-1 tabular">
+          <Star className="h-3.5 w-3.5 fill-primary text-primary" />
+          {players.reduce((sum, p) => sum + (p.rating ?? 0), 0)} estrelas
+        </span>
       </div>
 
       <div className="flex flex-wrap gap-2">
