@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { StarRating } from "@/components/star-rating";
 import { useStore } from "@/lib/store";
 import { displayName } from "@/lib/stats";
 import { cn } from "@/lib/utils";
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/jogadores")({
 
 function JogadoresPage() {
   const navigate = useNavigate();
-  const { db, hydrated, activeMarcolada, updateMarcolada, addPlayer, update } = useStore();
+  const { db, hydrated, activeMarcolada, updateMarcolada, addPlayer, updatePlayer, update } = useStore();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
@@ -140,10 +141,11 @@ function JogadoresPage() {
                 <li key={p.id}>
                   <div
                     className={cn(
-                      "flex items-center gap-3 rounded-2xl border bg-card p-3 transition-colors",
+                      "rounded-2xl border bg-card p-3 transition-colors",
                       selected ? "border-primary/45 bg-accent/60" : "border-border",
                     )}
                   >
+                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => toggle(p.id)}
@@ -177,6 +179,18 @@ function JogadoresPage() {
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
+                   </div>
+                   <div className="mt-2 flex items-center justify-between gap-2 border-t border-border/70 pt-2 pl-1">
+                     <span className="text-[11px] font-bold tracking-[0.12em] text-muted-foreground uppercase">
+                       Habilidade
+                     </span>
+                     <StarRating
+                       value={p.rating ?? 0}
+                       size={17}
+                       label={`Habilidade de ${displayName(p)}`}
+                       onChange={(v) => updatePlayer(p.id, { rating: v })}
+                     />
+                   </div>
                   </div>
                 </li>
               );
@@ -226,6 +240,7 @@ function NewPlayerDialog({
     photo?: string | undefined;
     position?: string | undefined;
     number?: string | undefined;
+    rating?: number | undefined;
   }) => void;
 }) {
   const [name, setName] = useState("");
@@ -233,6 +248,7 @@ function NewPlayerDialog({
   const [position, setPosition] = useState("");
   const [number, setNumber] = useState("");
   const [photo, setPhoto] = useState<string | undefined>(undefined);
+  const [rating, setRating] = useState(3);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const reset = () => {
@@ -241,6 +257,7 @@ function NewPlayerDialog({
     setPosition("");
     setNumber("");
     setPhoto(undefined);
+    setRating(3);
   };
 
   const pickPhoto = (file: File) => {
@@ -325,6 +342,16 @@ function NewPlayerDialog({
               </Label>
               <Input value={position} onChange={(e) => setPosition(e.target.value)} placeholder="Goleiro, zaga, ataque..." />
             </div>
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Habilidade
+              </Label>
+              <div className="flex items-center gap-3 rounded-2xl border border-border bg-accent/40 px-3 py-2">
+                <StarRating value={rating} onChange={setRating} size={22} />
+                <span className="ml-auto text-sm font-semibold tabular">{rating}/5</span>
+              </div>
+              <p className="text-xs text-muted-foreground">Usada para equilibrar o sorteio dos times. Dá para editar depois.</p>
+            </div>
           </div>
         </div>
         <DialogFooter>
@@ -341,6 +368,7 @@ function NewPlayerDialog({
                 position: position.trim() || undefined,
                 number: number.trim() || undefined,
                 photo,
+                rating,
               });
               reset();
               onOpenChange(false);

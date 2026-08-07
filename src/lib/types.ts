@@ -5,6 +5,8 @@ export type Player = {
   photo?: string | undefined;
   position?: string | undefined;
   number?: string | undefined;
+  /** Habilidade de 0 a 5 estrelas, usada para balancear o sorteio dos times. */
+  rating?: number | undefined;
 };
 
 export type Team = {
