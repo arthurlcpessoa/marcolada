@@ -8,13 +8,11 @@ import { initials } from "@/lib/stats";
 export function Logo({ className }: { className?: string }) {
   return (
     <span className={cn("inline-flex items-center gap-2", className)}>
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl hero-blue shadow-[var(--shadow-soft)]">
-        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <circle cx="12" cy="12" r="9" />
-          <path d="M12 7.5 15 9.7l-1.1 3.5h-3.8L9 9.7 12 7.5Z" fill="currentColor" stroke="none" />
-          <path d="M12 3v4.5M4.2 9.5 9 9.7M19.8 9.5 15 9.7M7.2 19l2.9-5.8M16.8 19l-2.9-5.8" />
-        </svg>
-      </span>
+      <img
+        src={logoAsset.url}
+        alt="Escudo do Marcolada Futebol Clube"
+        className="h-10 w-10 shrink-0 object-contain"
+      />
       <span className="min-w-0">
         <span className="block font-display text-base leading-none font-extrabold">Marcolada</span>
         <span className="block text-[0.65rem] leading-tight font-semibold tracking-[0.18em] text-muted-foreground uppercase">
