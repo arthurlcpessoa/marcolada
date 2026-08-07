@@ -81,18 +81,38 @@ function TimesPage() {
 
   const autoGenerate = () => {
     const count = Math.max(2, marcolada.teams.length || 2);
-    const shuffled = [...players].sort(() => Math.random() - 0.5);
     const base: Team[] =
       marcolada.teams.length >= 2
         ? marcolada.teams.map((t) => ({ ...t, playerIds: [], captainId: undefined }))
         : Array.from({ length: count }, (_, i) =>
             newTeam(DEFAULT_NAMES[i] ?? `Time ${i + 1}`, TEAM_COLORS[i % TEAM_COLORS.length]!.value),
           );
-    shuffled.forEach((p, i) => {
-      base[i % base.length]!.playerIds.push(p.id);
+
+    // Sorteio balanceado: embaralha, ordena por estrelas (desc) e distribui
+    // sempre para o time com menor soma de habilidade (e menos jogadores).
+    const ranked = [...players]
+      .sort(() => Math.random() - 0.5)
+      .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+
+    const buckets = base.map((t) => ({ team: t, sum: 0, size: 0 }));
+    ranked.forEach((p) => {
+      const target = buckets.reduce((best, b) =>
+        b.size < best.size || (b.size === best.size && b.sum < best.sum) ? b : best,
+      );
+      target.team.playerIds.push(p.id);
+      target.sum += p.rating ?? 0;
+      target.size += 1;
     });
+
     setTeams(() => base);
-    toast.success("Times sorteados");
+    const totals = buckets.map((b) => b.sum);
+    const diff = Math.max(...totals) - Math.min(...totals);
+    toast.success("Times sorteados", {
+      description:
+        diff === 0
+          ? "Equipes com a mesma força em estrelas."
+          : `Diferença de apenas ${diff.toFixed(0)} ${diff === 1 ? "estrela" : "estrelas"} entre os times.`,
+    });
   };
 
   const ready = marcolada.teams.filter((t) => t.playerIds.length > 0).length >= 2;
