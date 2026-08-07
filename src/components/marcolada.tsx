@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import type { Player } from "@/lib/types";
 import { initials } from "@/lib/stats";
+import logoAsset from "@/assets/marcolada-logo.png.asset.json";
 
 export function Logo({ className }: { className?: string }) {
   return (
