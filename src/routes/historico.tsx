@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { CalendarDays, MapPin, Search, Trophy } from "lucide-react";
 import { Avatar, EmptyState, PageHeader } from "@/components/marcolada";
+import { DeleteMarcoladaButton } from "@/components/delete-marcolada";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStore } from "@/lib/store";
