@@ -28,6 +28,7 @@ type Ctx = {
   activeMarcolada: Marcolada | null;
   getMarcolada: (id: string) => Marcolada | undefined;
   updateMarcolada: (id: string, fn: (p: Marcolada) => Marcolada, label?: string) => void;
+  deleteMarcolada: (id: string) => void;
   addPlayer: (p: Omit<Player, "id">) => Player;
 };
 
