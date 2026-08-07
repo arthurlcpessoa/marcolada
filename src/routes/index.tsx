@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, History, MapPin, Play, Plus, Target, Trophy, Users } from "lucide-react";
 import { Logo, EmptyState, Avatar } from "@/components/marcolada";
+import { DeleteMarcoladaButton } from "@/components/delete-marcolada";
 import { useStore } from "@/lib/store";
 import { displayName, playerStats, marcoladaTotals, topBy } from "@/lib/stats";
 
