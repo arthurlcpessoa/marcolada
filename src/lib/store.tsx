@@ -107,9 +107,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       activeMarcolada: db.marcoladas.find((p) => p.status === "active") ?? null,
       getMarcolada: (id: string) => db.marcoladas.find((p) => p.id === id),
       updateMarcolada,
+      deleteMarcolada,
       addPlayer,
     }),
-    [db, hydrated, update, undo, stack, updateMarcolada, addPlayer],
+    [db, hydrated, update, undo, stack, updateMarcolada, deleteMarcolada, addPlayer],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
