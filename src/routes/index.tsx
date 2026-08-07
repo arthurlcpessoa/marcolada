@@ -2,21 +2,21 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { CalendarDays, History, MapPin, Play, Plus, Target, Trophy, Users } from "lucide-react";
 import { Logo, EmptyState, Avatar } from "@/components/marcolada";
 import { useStore } from "@/lib/store";
-import { displayName, playerStats, peladaTotals, topBy } from "@/lib/stats";
+import { displayName, playerStats, marcoladaTotals, topBy } from "@/lib/stats";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Marcolada Stats — Estatísticas da pelada em tempo real" },
+      { title: "Marcolada Stats — Estatísticas da marcolada em tempo real" },
       {
         name: "description",
         content:
-          "Registre gols, assistências, times e partidas da sua pelada e veja artilheiro, garçom e melhor time atualizados ao vivo.",
+          "Registre gols, assistências, times e partidas da sua marcolada e veja artilheiro, garçom e melhor time atualizados ao vivo.",
       },
-      { property: "og:title", content: "Marcolada Stats — Estatísticas da pelada em tempo real" },
+      { property: "og:title", content: "Marcolada Stats — Estatísticas da marcolada em tempo real" },
       {
         property: "og:description",
-        content: "Gols, assistências e rankings da pelada entre amigos, atualizados em tempo real.",
+        content: "Gols, assistências e rankings da marcolada entre amigos, atualizados em tempo real.",
       },
     ],
   }),
@@ -29,9 +29,9 @@ function formatDate(iso: string) {
 }
 
 function Home() {
-  const { db, hydrated, activePelada } = useStore();
-  const finished = db.peladas.filter((p) => p.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
-  const stats = playerStats(db.peladas, db.players);
+  const { db, hydrated, activeMarcolada } = useStore();
+  const finished = db.marcoladas.filter((p) => p.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
+  const stats = playerStats(db.marcoladas, db.players);
   const artilheiro = topBy(stats, "goals");
   const garcom = topBy(stats, "assists");
 
@@ -55,7 +55,7 @@ function Home() {
 
           <div className="mt-10 max-w-xl">
             <p className="text-xs font-semibold tracking-[0.22em] uppercase opacity-75">
-              Pelada entre amigos
+              Marcolada entre amigos
             </p>
             <h1 className="mt-2 font-display text-3xl leading-tight font-extrabold sm:text-4xl">
               Toda marcolada merece estatística de verdade.
@@ -70,16 +70,16 @@ function Home() {
 
       <div className="relative z-10 mx-auto -mt-16 max-w-5xl space-y-6 px-4">
         <div className="surface grid gap-3 p-4 sm:grid-cols-2">
-          {hydrated && activePelada ? (
+          {hydrated && activeMarcolada ? (
             <>
               <Link
                 to="/partida"
                 className="hero-blue flex items-center justify-between gap-3 rounded-xl px-5 py-4 font-semibold transition-transform active:scale-[0.99]"
               >
                 <span className="min-w-0">
-                  <span className="block truncate">Continuar pelada</span>
+                  <span className="block truncate">Continuar marcolada</span>
                   <span className="block truncate text-xs font-medium opacity-80">
-                    {activePelada.name}
+                    {activeMarcolada.name}
                   </span>
                 </span>
                 <Play className="h-5 w-5 shrink-0" />
@@ -88,7 +88,7 @@ function Home() {
                 to="/nova"
                 className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-5 py-4 font-semibold transition-colors hover:bg-accent"
               >
-                Nova pelada <Plus className="h-5 w-5 shrink-0 text-primary" />
+                Nova marcolada <Plus className="h-5 w-5 shrink-0 text-primary" />
               </Link>
             </>
           ) : (
@@ -97,7 +97,7 @@ function Home() {
               className="hero-blue flex items-center justify-between gap-3 rounded-xl px-5 py-4 font-semibold transition-transform active:scale-[0.99] sm:col-span-2"
             >
               <span>
-                <span className="block">Nova pelada</span>
+                <span className="block">Nova marcolada</span>
                 <span className="block text-xs font-medium opacity-80">
                   Comece agora e registre tudo ao vivo
                 </span>
@@ -148,7 +148,7 @@ function Home() {
         <section>
           <div className="mb-3 flex items-center justify-between gap-3">
             <h2 className="text-sm font-bold tracking-[0.14em] text-muted-foreground uppercase">
-              Peladas anteriores
+              Marcoladas anteriores
             </h2>
             {finished.length > 3 ? (
               <Link to="/historico" className="text-xs font-semibold text-primary">
@@ -159,13 +159,13 @@ function Home() {
           {finished.length === 0 ? (
             <EmptyState
               icon={<CalendarDays className="h-6 w-6" />}
-              title="Nenhuma pelada encerrada"
+              title="Nenhuma marcolada encerrada"
               description="O histórico aparece aqui depois que você encerrar a primeira marcolada."
             />
           ) : (
             <ul className="space-y-3">
               {finished.slice(0, 3).map((p) => {
-                const t = peladaTotals(p);
+                const t = marcoladaTotals(p);
                 return (
                   <li key={p.id}>
                     <Link

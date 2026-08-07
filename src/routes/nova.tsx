@@ -6,18 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uid, useStore } from "@/lib/store";
-import type { Pelada } from "@/lib/types";
+import type { Marcolada } from "@/lib/types";
 
 export const Route = createFileRoute("/nova")({
   head: () => ({
     meta: [
-      { title: "Nova pelada — Marcolada Stats" },
+      { title: "Nova marcolada — Marcolada Stats" },
       { name: "description", content: "Cadastre data, local, formato e duração da sua próxima marcolada." },
-      { property: "og:title", content: "Nova pelada — Marcolada Stats" },
+      { property: "og:title", content: "Nova marcolada — Marcolada Stats" },
       { property: "og:description", content: "Cadastre os dados da próxima marcolada em segundos." },
     ],
   }),
-  component: NovaPelada,
+  component: NovaMarcolada,
 });
 
 function todayISO() {
@@ -25,9 +25,9 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-function NovaPelada() {
+function NovaMarcolada() {
   const navigate = useNavigate();
-  const { update, activePelada } = useStore();
+  const { update, activeMarcolada } = useStore();
   const initialDate = todayISO();
   const [date, setDate] = useState(initialDate);
   const [name, setName] = useState(
@@ -43,7 +43,7 @@ function NovaPelada() {
       toast.error("Nome e data são obrigatórios");
       return;
     }
-    const pelada: Pelada = {
+    const marcolada: Marcolada = {
       id: uid(),
       name: name.trim(),
       date,
@@ -59,11 +59,11 @@ function NovaPelada() {
     };
     update((d) => ({
       ...d,
-      peladas: [
-        ...d.peladas.map((p) =>
+      marcoladas: [
+        ...d.marcoladas.map((p) =>
           p.status === "active" ? { ...p, status: "finished" as const, endedAt: Date.now() } : p,
         ),
-        pelada,
+        marcolada,
       ],
     }));
     navigate({ to: "/jogadores" });
@@ -71,17 +71,17 @@ function NovaPelada() {
 
   return (
     <main className="min-h-screen pb-28">
-      <PageHeader title="Nova pelada" subtitle="Passo 1 de 3 · Dados do dia" back="/" />
+      <PageHeader title="Nova marcolada" subtitle="Passo 1 de 3 · Dados do dia" back="/" />
       <div className="mx-auto max-w-2xl space-y-4 px-4 py-5">
-        {activePelada ? (
+        {activeMarcolada ? (
           <p className="rounded-xl border border-primary/25 bg-accent px-4 py-3 text-sm text-accent-foreground">
-            Existe uma pelada em andamento (<strong>{activePelada.name}</strong>). Ao criar uma nova,
+            Existe uma marcolada em andamento (<strong>{activeMarcolada.name}</strong>). Ao criar uma nova,
             ela será encerrada.
           </p>
         ) : null}
 
         <div className="surface space-y-4 p-4 sm:p-5">
-          <Field label="Nome da pelada" required>
+          <Field label="Nome da marcolada" required>
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Marcolada de quinta" />
           </Field>
           <Field label="Data" required>
@@ -110,7 +110,7 @@ function NovaPelada() {
       <div className="fixed inset-x-0 bottom-0 border-t border-border bg-background/95 p-4 backdrop-blur">
         <div className="mx-auto max-w-2xl">
           <Button size="lg" className="h-13 w-full text-base font-semibold" onClick={create}>
-            Criar pelada e escolher jogadores
+            Criar marcolada e escolher jogadores
           </Button>
         </div>
       </div>

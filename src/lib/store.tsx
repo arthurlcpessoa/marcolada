@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
-import { emptyDB, type DB, type Match, type Pelada, type Player, type Team } from "./types";
+import { emptyDB, type DB, type Match, type Marcolada, type Player, type Team } from "./types";
 
 const KEY = "marcolada:v1";
 
@@ -10,7 +10,7 @@ function load(): DB {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return emptyDB;
     const parsed = JSON.parse(raw) as DB;
-    return { players: parsed.players ?? [], peladas: parsed.peladas ?? [] };
+    return { players: parsed.players ?? [], marcoladas: parsed.marcoladas ?? [] };
   } catch {
     return emptyDB;
   }
@@ -25,9 +25,9 @@ type Ctx = {
   undo: () => void;
   canUndo: boolean;
   lastLabel: string | null;
-  activePelada: Pelada | null;
-  getPelada: (id: string) => Pelada | undefined;
-  updatePelada: (id: string, fn: (p: Pelada) => Pelada, label?: string) => void;
+  activeMarcolada: Marcolada | null;
+  getMarcolada: (id: string) => Marcolada | undefined;
+  updateMarcolada: (id: string, fn: (p: Marcolada) => Marcolada, label?: string) => void;
   addPlayer: (p: Omit<Player, "id">) => Player;
 };
 
@@ -69,10 +69,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (last) setDb(last.db);
   }, []);
 
-  const updatePelada = useCallback(
-    (id: string, fn: (p: Pelada) => Pelada, label?: string) => {
+  const updateMarcolada = useCallback(
+    (id: string, fn: (p: Marcolada) => Marcolada, label?: string) => {
       update(
-        (d) => ({ ...d, peladas: d.peladas.map((p) => (p.id === id ? fn(p) : p)) }),
+        (d) => ({ ...d, marcoladas: d.marcoladas.map((p) => (p.id === id ? fn(p) : p)) }),
         label,
       );
     },
@@ -96,12 +96,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       undo,
       canUndo: stack.length > 0,
       lastLabel: stack[stack.length - 1] ?? null,
-      activePelada: db.peladas.find((p) => p.status === "active") ?? null,
-      getPelada: (id: string) => db.peladas.find((p) => p.id === id),
-      updatePelada,
+      activeMarcolada: db.marcoladas.find((p) => p.status === "active") ?? null,
+      getMarcolada: (id: string) => db.marcoladas.find((p) => p.id === id),
+      updateMarcolada,
       addPlayer,
     }),
-    [db, hydrated, update, undo, stack, updatePelada, addPlayer],
+    [db, hydrated, update, undo, stack, updateMarcolada, addPlayer],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

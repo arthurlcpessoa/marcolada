@@ -1,4 +1,4 @@
-import type { Match, Pelada, Player, Team } from "./types";
+import type { Match, Marcolada, Player, Team } from "./types";
 
 export function matchScore(m: Match) {
   let a = m.adjust.a;
@@ -36,9 +36,9 @@ export type TeamStat = {
   winRate: number;
 };
 
-const finished = (p: Pelada) => p.matches.filter((m) => m.status === "finished");
+const finished = (p: Marcolada) => p.matches.filter((m) => m.status === "finished");
 
-export function playerStats(peladas: Pelada[], players: Player[]): PlayerStat[] {
+export function playerStats(marcoladas: Marcolada[], players: Player[]): PlayerStat[] {
   const map = new Map<string, PlayerStat>();
   const get = (id: string) => {
     let s = map.get(id);
@@ -62,8 +62,8 @@ export function playerStats(peladas: Pelada[], players: Player[]): PlayerStat[] 
     return s;
   };
 
-  for (const pelada of peladas) {
-    for (const m of pelada.matches) {
+  for (const marcolada of marcoladas) {
+    for (const m of marcolada.matches) {
       if (m.status !== "finished") continue;
       const { a, b } = matchScore(m);
       for (const teamId of [m.teamAId, m.teamBId]) {
@@ -99,12 +99,12 @@ export function playerStats(peladas: Pelada[], players: Player[]): PlayerStat[] 
   return [...map.values()];
 }
 
-export function teamStats(pelada: Pelada): TeamStat[] {
+export function teamStats(marcolada: Marcolada): TeamStat[] {
   const stats = new Map<string, TeamStat>();
   const get = (id: string) => {
     let s = stats.get(id);
     if (!s) {
-      const team = pelada.teams.find((t) => t.id === id);
+      const team = marcolada.teams.find((t) => t.id === id);
       if (!team) return null;
       s = { team, games: 0, wins: 0, draws: 0, losses: 0, gf: 0, ga: 0, gd: 0, winRate: 0 };
       stats.set(id, s);
@@ -112,7 +112,7 @@ export function teamStats(pelada: Pelada): TeamStat[] {
     return s;
   };
 
-  for (const m of finished(pelada)) {
+  for (const m of finished(marcolada)) {
     const { a, b } = matchScore(m);
     const sa = get(m.teamAId);
     const sb = get(m.teamBId);
@@ -142,10 +142,10 @@ export function teamStats(pelada: Pelada): TeamStat[] {
   return [...stats.values()];
 }
 
-function headToHead(pelada: Pelada, aId: string, bId: string) {
+function headToHead(marcolada: Marcolada, aId: string, bId: string) {
   let aPts = 0;
   let bPts = 0;
-  for (const m of finished(pelada)) {
+  for (const m of finished(marcolada)) {
     const ids = [m.teamAId, m.teamBId];
     if (!ids.includes(aId) || !ids.includes(bId)) continue;
     const { a, b } = matchScore(m);
@@ -161,19 +161,19 @@ function headToHead(pelada: Pelada, aId: string, bId: string) {
   return bPts - aPts;
 }
 
-export function rankTeams(pelada: Pelada): TeamStat[] {
-  return teamStats(pelada).sort((x, y) => {
+export function rankTeams(marcolada: Marcolada): TeamStat[] {
+  return teamStats(marcolada).sort((x, y) => {
     if (y.wins !== x.wins) return y.wins - x.wins;
     if (y.gd !== x.gd) return y.gd - x.gd;
     if (y.gf !== x.gf) return y.gf - x.gf;
-    const h2h = headToHead(pelada, x.team.id, y.team.id);
+    const h2h = headToHead(marcolada, x.team.id, y.team.id);
     if (h2h !== 0) return h2h;
     return x.ga - y.ga;
   });
 }
 
-export function peladaTotals(pelada: Pelada) {
-  const fm = finished(pelada);
+export function marcoladaTotals(marcolada: Marcolada) {
+  const fm = finished(marcolada);
   let goals = 0;
   let assists = 0;
   for (const m of fm) {

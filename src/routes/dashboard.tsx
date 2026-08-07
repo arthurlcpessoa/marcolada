@@ -12,9 +12,9 @@ export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard ao vivo — Marcolada Stats" },
-      { name: "description", content: "Artilheiro, garçom, melhor time e rankings atualizados durante a pelada." },
+      { name: "description", content: "Artilheiro, garçom, melhor time e rankings atualizados durante a marcolada." },
       { property: "og:title", content: "Dashboard ao vivo — Marcolada Stats" },
-      { property: "og:description", content: "Acompanhe os destaques da pelada em tempo real." },
+      { property: "og:description", content: "Acompanhe os destaques da marcolada em tempo real." },
     ],
   }),
   component: DashboardPage,
@@ -22,34 +22,34 @@ export const Route = createFileRoute("/dashboard")({
 
 function DashboardPage() {
   const navigate = useNavigate();
-  const { db, hydrated, activePelada } = useStore();
+  const { db, hydrated, activeMarcolada } = useStore();
 
-  if (hydrated && !activePelada) {
+  if (hydrated && !activeMarcolada) {
     return (
       <main className="min-h-screen">
         <PageHeader title="Dashboard" back="/" />
         <div className="mx-auto max-w-4xl px-4 py-6">
           <EmptyState
             icon={<BarChart3 className="h-6 w-6" />}
-            title="Nenhuma pelada em andamento"
-            description="Comece uma pelada para acompanhar as estatísticas ao vivo."
-            action={<Button onClick={() => navigate({ to: "/nova" })}>Nova pelada</Button>}
+            title="Nenhuma marcolada em andamento"
+            description="Comece uma marcolada para acompanhar as estatísticas ao vivo."
+            action={<Button onClick={() => navigate({ to: "/nova" })}>Nova marcolada</Button>}
           />
         </div>
       </main>
     );
   }
 
-  const pelada = activePelada;
-  if (!pelada) return null;
-  const stats = playerStats([pelada], db.players);
-  const finished = pelada.matches.filter((m) => m.status === "finished");
+  const marcolada = activeMarcolada;
+  if (!marcolada) return null;
+  const stats = playerStats([marcolada], db.players);
+  const finished = marcolada.matches.filter((m) => m.status === "finished");
 
   return (
     <main className="min-h-screen pb-28">
-      <PageHeader title="Dashboard ao vivo" subtitle={pelada.name} back="/" />
+      <PageHeader title="Dashboard ao vivo" subtitle={marcolada.name} back="/" />
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-5">
-        <HighlightCards pelada={pelada} players={db.players} />
+        <HighlightCards marcolada={marcolada} players={db.players} />
 
         <Tabs defaultValue="jogadores">
           <TabsList className="w-full">
@@ -67,7 +67,7 @@ function DashboardPage() {
             <PlayerRanking stats={stats} />
           </TabsContent>
           <TabsContent value="times" className="mt-4">
-            <TeamRanking pelada={pelada} />
+            <TeamRanking marcolada={marcolada} />
           </TabsContent>
           <TabsContent value="partidas" className="mt-4">
             {finished.length === 0 ? (
@@ -76,8 +76,8 @@ function DashboardPage() {
               <ul className="space-y-2">
                 {finished.map((m) => {
                   const { a, b } = matchScore(m);
-                  const ta = pelada.teams.find((t) => t.id === m.teamAId);
-                  const tb = pelada.teams.find((t) => t.id === m.teamBId);
+                  const ta = marcolada.teams.find((t) => t.id === m.teamAId);
+                  const tb = marcolada.teams.find((t) => t.id === m.teamBId);
                   return (
                     <li
                       key={m.id}

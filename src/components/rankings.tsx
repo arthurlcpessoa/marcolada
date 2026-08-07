@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Crown, Handshake, Target, Trophy } from "lucide-react";
 import { Avatar, EmptyState, StatCard, TeamDot } from "@/components/marcolada";
-import { displayName, peladaTotals, rankTeams, topBy, type PlayerStat } from "@/lib/stats";
-import type { Pelada, Player } from "@/lib/types";
+import { displayName, marcoladaTotals, rankTeams, topBy, type PlayerStat } from "@/lib/stats";
+import type { Marcolada, Player } from "@/lib/types";
 import { playerStats } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 
@@ -16,10 +16,10 @@ const SORTS: { key: SortKey; label: string }[] = [
   { key: "winRate", label: "Aproveit." },
 ];
 
-export function HighlightCards({ pelada, players }: { pelada: Pelada; players: Player[] }) {
-  const stats = playerStats([pelada], players);
-  const totals = peladaTotals(pelada);
-  const teams = rankTeams(pelada);
+export function HighlightCards({ marcolada, players }: { marcolada: Marcolada; players: Player[] }) {
+  const stats = playerStats([marcolada], players);
+  const totals = marcoladaTotals(marcolada);
+  const teams = rankTeams(marcolada);
   const artilheiro = topBy(stats, "goals");
   const garcom = topBy(stats, "assists");
   const participacoes = topBy(stats, "participations");
@@ -132,8 +132,8 @@ export function PlayerRanking({ stats }: { stats: PlayerStat[] }) {
   );
 }
 
-export function TeamRanking({ pelada }: { pelada: Pelada }) {
-  const rows = rankTeams(pelada);
+export function TeamRanking({ marcolada }: { marcolada: Marcolada }) {
+  const rows = rankTeams(marcolada);
   if (rows.length === 0) {
     return <EmptyState title="Nenhum time classificado" description="Encerre uma partida para ver a tabela." />;
   }

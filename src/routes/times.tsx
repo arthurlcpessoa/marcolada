@@ -14,9 +14,9 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/times")({
   head: () => ({
     meta: [
-      { title: "Times da pelada — Marcolada Stats" },
+      { title: "Times da marcolada — Marcolada Stats" },
       { name: "description", content: "Monte, sorteie e edite os times da marcolada antes de começar as partidas." },
-      { property: "og:title", content: "Times da pelada — Marcolada Stats" },
+      { property: "og:title", content: "Times da marcolada — Marcolada Stats" },
       { property: "og:description", content: "Distribua os jogadores, defina cores e capitães dos times." },
     ],
   }),
@@ -27,38 +27,38 @@ const DEFAULT_NAMES = ["Azulão", "Branco", "Celeste", "Marinho", "Time 5", "Tim
 
 function TimesPage() {
   const navigate = useNavigate();
-  const { db, hydrated, activePelada, updatePelada } = useStore();
+  const { db, hydrated, activeMarcolada, updateMarcolada } = useStore();
   const [picked, setPicked] = useState<string | null>(null);
 
-  if (hydrated && !activePelada) {
+  if (hydrated && !activeMarcolada) {
     return (
       <main className="min-h-screen">
         <PageHeader title="Times" back="/" />
         <div className="mx-auto max-w-3xl px-4 py-6">
           <EmptyState
             icon={<Users className="h-6 w-6" />}
-            title="Nenhuma pelada em andamento"
-            action={<Button onClick={() => navigate({ to: "/nova" })}>Nova pelada</Button>}
+            title="Nenhuma marcolada em andamento"
+            action={<Button onClick={() => navigate({ to: "/nova" })}>Nova marcolada</Button>}
           />
         </div>
       </main>
     );
   }
 
-  const pelada = activePelada;
-  if (!pelada) return null;
+  const marcolada = activeMarcolada;
+  if (!marcolada) return null;
 
-  const players = pelada.rosterIds
+  const players = marcolada.rosterIds
     .map((id) => db.players.find((p) => p.id === id))
     .filter(Boolean) as Player[];
-  const assigned = new Set(pelada.teams.flatMap((t) => t.playerIds));
+  const assigned = new Set(marcolada.teams.flatMap((t) => t.playerIds));
   const pool = players.filter((p) => !assigned.has(p.id));
 
   const setTeams = (fn: (teams: Team[]) => Team[]) =>
-    updatePelada(pelada.id, (p) => ({ ...p, teams: fn(p.teams) }));
+    updateMarcolada(marcolada.id, (p) => ({ ...p, teams: fn(p.teams) }));
 
   const addTeam = () => {
-    const idx = pelada.teams.length;
+    const idx = marcolada.teams.length;
     setTeams((t) => [
       ...t,
       newTeam(DEFAULT_NAMES[idx] ?? `Time ${idx + 1}`, TEAM_COLORS[idx % TEAM_COLORS.length]!.value),
@@ -80,11 +80,11 @@ function TimesPage() {
   };
 
   const autoGenerate = () => {
-    const count = Math.max(2, pelada.teams.length || 2);
+    const count = Math.max(2, marcolada.teams.length || 2);
     const shuffled = [...players].sort(() => Math.random() - 0.5);
     const base: Team[] =
-      pelada.teams.length >= 2
-        ? pelada.teams.map((t) => ({ ...t, playerIds: [], captainId: undefined }))
+      marcolada.teams.length >= 2
+        ? marcolada.teams.map((t) => ({ ...t, playerIds: [], captainId: undefined }))
         : Array.from({ length: count }, (_, i) =>
             newTeam(DEFAULT_NAMES[i] ?? `Time ${i + 1}`, TEAM_COLORS[i % TEAM_COLORS.length]!.value),
           );
@@ -95,7 +95,7 @@ function TimesPage() {
     toast.success("Times sorteados");
   };
 
-  const ready = pelada.teams.filter((t) => t.playerIds.length > 0).length >= 2;
+  const ready = marcolada.teams.filter((t) => t.playerIds.length > 0).length >= 2;
 
   return (
     <main className="min-h-screen pb-28">
@@ -145,7 +145,7 @@ function TimesPage() {
           )}
         </div>
 
-        {pelada.teams.length === 0 ? (
+        {marcolada.teams.length === 0 ? (
           <EmptyState
             icon={<Users className="h-6 w-6" />}
             title="Nenhum time criado"
@@ -161,7 +161,7 @@ function TimesPage() {
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
-            {pelada.teams.map((team) => (
+            {marcolada.teams.map((team) => (
               <TeamCard
                 key={team.id}
                 team={team}
@@ -185,7 +185,7 @@ function TimesPage() {
           </div>
         )}
 
-        {pelada.teams.length > 0 ? (
+        {marcolada.teams.length > 0 ? (
           <Button variant="secondary" className="h-12 w-full" onClick={addTeam}>
             <Plus className="h-4 w-4" /> Adicionar time
           </Button>
