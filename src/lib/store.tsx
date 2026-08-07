@@ -80,6 +80,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [update],
   );
 
+  const deleteMarcolada = useCallback(
+    (id: string) => {
+      update((d) => ({ ...d, marcoladas: d.marcoladas.filter((p) => p.id !== id) }), "Excluir marcolada");
+    },
+    [update],
+  );
+
   const addPlayer = useCallback(
     (p: Omit<Player, "id">) => {
       const player: Player = { ...p, id: uid() };
