@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { CalendarDays, MapPin, Search, Trophy } from "lucide-react";
 import { Avatar, EmptyState, PageHeader } from "@/components/marcolada";
+import { DeleteMarcoladaButton } from "@/components/delete-marcolada";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStore } from "@/lib/store";
@@ -100,11 +101,11 @@ function HistoricoPage() {
               {filtered.map((p) => {
                 const t = marcoladaTotals(p);
                 return (
-                  <li key={p.id}>
+                  <li key={p.id} className="relative">
                     <Link
                       to="/resumo/$id"
                       params={{ id: p.id }}
-                      className="surface flex items-center gap-3 p-4 transition-shadow hover:shadow-[var(--shadow-lift)]"
+                      className="surface flex items-center gap-3 p-4 pr-14 transition-shadow hover:shadow-[var(--shadow-lift)]"
                     >
                       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                         <Trophy className="h-5 w-5" />
@@ -123,6 +124,11 @@ function HistoricoPage() {
                         </span>
                       </span>
                     </Link>
+                    <DeleteMarcoladaButton
+                      id={p.id}
+                      name={p.name}
+                      className="absolute top-1/2 right-3 -translate-y-1/2"
+                    />
                   </li>
                 );
               })}
