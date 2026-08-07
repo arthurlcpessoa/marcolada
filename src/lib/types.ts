@@ -42,7 +42,7 @@ export type Match = {
   runningSince?: number | null | undefined;
 };
 
-export type Pelada = {
+export type Marcolada = {
   id: string;
   name: string;
   date: string;
@@ -60,10 +60,10 @@ export type Pelada = {
 
 export type DB = {
   players: Player[];
-  peladas: Pelada[];
+  marcoladas: Marcolada[];
 };
 
-export const emptyDB: DB = { players: [], peladas: [] };
+export const emptyDB: DB = { players: [], marcoladas: [] };
 
 export const TEAM_COLORS = [
   { name: "Azul", value: "#2563eb" },

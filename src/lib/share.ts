@@ -1,5 +1,5 @@
-import type { Pelada, Player } from "./types";
-import { displayName, matchScore, peladaTotals, playerStats, rankTeams, topBy } from "./stats";
+import type { Marcolada, Player } from "./types";
+import { displayName, matchScore, marcoladaTotals, playerStats, rankTeams, topBy } from "./stats";
 
 const W = 1080;
 const H = 1920;
@@ -14,7 +14,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath();
 }
 
-export async function buildSummaryImage(pelada: Pelada, players: Player[]): Promise<Blob | null> {
+export async function buildSummaryImage(marcolada: Marcolada, players: Player[]): Promise<Blob | null> {
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
@@ -33,12 +33,12 @@ export async function buildSummaryImage(pelada: Pelada, players: Player[]): Prom
   ctx.arc(W - 60, 180, 320, 0, Math.PI * 2);
   ctx.fill();
 
-  const stats = playerStats([pelada], players);
+  const stats = playerStats([marcolada], players);
   const artilheiro = topBy(stats, "goals");
   const garcom = topBy(stats, "assists");
   const participacoes = topBy(stats, "participations");
-  const bestTeam = rankTeams(pelada)[0];
-  const totals = peladaTotals(pelada);
+  const bestTeam = rankTeams(marcolada)[0];
+  const totals = marcoladaTotals(marcolada);
 
   ctx.textBaseline = "top";
   ctx.fillStyle = "#ffffff";
@@ -46,11 +46,11 @@ export async function buildSummaryImage(pelada: Pelada, players: Player[]): Prom
   ctx.fillText("MARCOLADA STATS", 80, 110);
   ctx.fillStyle = "rgba(255,255,255,0.72)";
   ctx.font = "600 28px 'Plus Jakarta Sans', sans-serif";
-  ctx.fillText(pelada.date.split("-").reverse().join("/"), 80, 158);
+  ctx.fillText(marcolada.date.split("-").reverse().join("/"), 80, 158);
 
   ctx.fillStyle = "#ffffff";
   ctx.font = "800 62px Sora, sans-serif";
-  wrap(ctx, pelada.name, 80, 230, W - 160, 70);
+  wrap(ctx, marcolada.name, 80, 230, W - 160, 70);
 
   let y = 400;
   const card = (label: string, value: string, sub: string) => {
@@ -88,11 +88,11 @@ export async function buildSummaryImage(pelada: Pelada, players: Player[]): Prom
   ctx.fillText("RESULTADOS", 80, y + 12);
   y += 58;
 
-  const finished = pelada.matches.filter((m) => m.status === "finished").slice(0, 8);
+  const finished = marcolada.matches.filter((m) => m.status === "finished").slice(0, 8);
   for (const m of finished) {
     const { a, b } = matchScore(m);
-    const ta = pelada.teams.find((t) => t.id === m.teamAId)?.name ?? "Time A";
-    const tb = pelada.teams.find((t) => t.id === m.teamBId)?.name ?? "Time B";
+    const ta = marcolada.teams.find((t) => t.id === m.teamAId)?.name ?? "Time A";
+    const tb = marcolada.teams.find((t) => t.id === m.teamBId)?.name ?? "Time B";
     ctx.fillStyle = "rgba(255,255,255,0.92)";
     ctx.font = "600 30px 'Plus Jakarta Sans', sans-serif";
     ctx.fillText(`${ta}`, 80, y);
@@ -137,16 +137,16 @@ function wrap(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
   if (line) ctx.fillText(line, x, yy);
 }
 
-export async function shareSummary(pelada: Pelada, players: Player[]) {
-  const blob = await buildSummaryImage(pelada, players);
+export async function shareSummary(marcolada: Marcolada, players: Player[]) {
+  const blob = await buildSummaryImage(marcolada, players);
   if (!blob) return;
-  const file = new File([blob], `${pelada.name.replace(/\s+/g, "-").toLowerCase()}.png`, {
+  const file = new File([blob], `${marcolada.name.replace(/\s+/g, "-").toLowerCase()}.png`, {
     type: "image/png",
   });
   const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
   if (nav.canShare?.({ files: [file] })) {
     try {
-      await navigator.share({ files: [file], title: pelada.name });
+      await navigator.share({ files: [file], title: marcolada.name });
       return;
     } catch {
       /* usuário cancelou */

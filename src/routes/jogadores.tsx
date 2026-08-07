@@ -21,10 +21,10 @@ import { cn } from "@/lib/utils";
 export const Route = createFileRoute("/jogadores")({
   head: () => ({
     meta: [
-      { title: "Jogadores da pelada — Marcolada Stats" },
+      { title: "Jogadores da marcolada — Marcolada Stats" },
       { name: "description", content: "Selecione quem está presente e cadastre novos jogadores da marcolada." },
-      { property: "og:title", content: "Jogadores da pelada — Marcolada Stats" },
-      { property: "og:description", content: "Monte a lista de presentes da pelada em poucos toques." },
+      { property: "og:title", content: "Jogadores da marcolada — Marcolada Stats" },
+      { property: "og:description", content: "Monte a lista de presentes da marcolada em poucos toques." },
     ],
   }),
   component: JogadoresPage,
@@ -32,11 +32,11 @@ export const Route = createFileRoute("/jogadores")({
 
 function JogadoresPage() {
   const navigate = useNavigate();
-  const { db, hydrated, activePelada, updatePelada, addPlayer, update } = useStore();
+  const { db, hydrated, activeMarcolada, updateMarcolada, addPlayer, update } = useStore();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
-  const roster = activePelada?.rosterIds ?? [];
+  const roster = activeMarcolada?.rosterIds ?? [];
   const list = useMemo(() => {
     const q = query.trim().toLowerCase();
     return db.players
@@ -48,16 +48,16 @@ function JogadoresPage() {
       });
   }, [db.players, query, roster]);
 
-  if (hydrated && !activePelada) {
+  if (hydrated && !activeMarcolada) {
     return (
       <main className="min-h-screen">
         <PageHeader title="Jogadores" back="/" />
         <div className="mx-auto max-w-2xl px-4 py-6">
           <EmptyState
             icon={<Users className="h-6 w-6" />}
-            title="Nenhuma pelada em andamento"
-            description="Crie uma pelada para montar a lista de presentes."
-            action={<Button onClick={() => navigate({ to: "/nova" })}>Nova pelada</Button>}
+            title="Nenhuma marcolada em andamento"
+            description="Crie uma marcolada para montar a lista de presentes."
+            action={<Button onClick={() => navigate({ to: "/nova" })}>Nova marcolada</Button>}
           />
         </div>
       </main>
@@ -65,8 +65,8 @@ function JogadoresPage() {
   }
 
   const toggle = (id: string) => {
-    if (!activePelada) return;
-    updatePelada(activePelada.id, (p) => ({
+    if (!activeMarcolada) return;
+    updateMarcolada(activeMarcolada.id, (p) => ({
       ...p,
       rosterIds: p.rosterIds.includes(id)
         ? p.rosterIds.filter((x) => x !== id)
@@ -81,7 +81,7 @@ function JogadoresPage() {
     update((d) => ({
       ...d,
       players: d.players.filter((p) => p.id !== id),
-      peladas: d.peladas.map((p) =>
+      marcoladas: d.marcoladas.map((p) =>
         p.status === "active"
           ? {
               ...p,
@@ -127,7 +127,7 @@ function JogadoresPage() {
           <EmptyState
             icon={<Users className="h-6 w-6" />}
             title="Nenhum jogador cadastrado"
-            description="Cadastre o primeiro jogador da turma. Depois ele fica salvo para as próximas peladas."
+            description="Cadastre o primeiro jogador da turma. Depois ele fica salvo para as próximas marcoladas."
             action={<Button onClick={() => setOpen(true)}>Cadastrar jogador</Button>}
           />
         ) : list.length === 0 ? (
@@ -203,8 +203,8 @@ function JogadoresPage() {
         onOpenChange={setOpen}
         onCreate={(data) => {
           const player = addPlayer(data);
-          if (activePelada) {
-            updatePelada(activePelada.id, (p) => ({ ...p, rosterIds: [...p.rosterIds, player.id] }));
+          if (activeMarcolada) {
+            updateMarcolada(activeMarcolada.id, (p) => ({ ...p, rosterIds: [...p.rosterIds, player.id] }));
           }
           toast.success(`${displayName(player)} adicionado`);
         }}
@@ -274,7 +274,7 @@ function NewPlayerDialog({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Novo jogador</DialogTitle>
-          <DialogDescription>Só o nome é obrigatório. Ele fica salvo para as próximas peladas.</DialogDescription>
+          <DialogDescription>Só o nome é obrigatório. Ele fica salvo para as próximas marcoladas.</DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div className="flex items-center gap-3">
@@ -346,7 +346,7 @@ function NewPlayerDialog({
               onOpenChange(false);
             }}
           >
-            Adicionar à pelada
+            Adicionar à marcolada
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -7,7 +7,7 @@ import { PlayerRanking, TeamRanking } from "@/components/rankings";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStore } from "@/lib/store";
-import { displayName, formatClock, matchScore, peladaTotals, playerStats, rankTeams, topBy } from "@/lib/stats";
+import { displayName, formatClock, matchScore, marcoladaTotals, playerStats, rankTeams, topBy } from "@/lib/stats";
 import { shareSummary } from "@/lib/share";
 import { cn } from "@/lib/utils";
 import type { PlayerStat } from "@/lib/stats";
@@ -15,10 +15,10 @@ import type { PlayerStat } from "@/lib/stats";
 export const Route = createFileRoute("/resumo/$id")({
   head: () => ({
     meta: [
-      { title: "Resumo da pelada — Marcolada Stats" },
+      { title: "Resumo da marcolada — Marcolada Stats" },
       { name: "description", content: "Premiação, rankings e todos os resultados da marcolada." },
-      { property: "og:title", content: "Resumo da pelada — Marcolada Stats" },
-      { property: "og:description", content: "Artilheiro, garçom, melhor time e resultados completos da pelada." },
+      { property: "og:title", content: "Resumo da marcolada — Marcolada Stats" },
+      { property: "og:description", content: "Artilheiro, garçom, melhor time e resultados completos da marcolada." },
     ],
   }),
   component: ResumoPage,
@@ -26,27 +26,27 @@ export const Route = createFileRoute("/resumo/$id")({
 
 function ResumoPage() {
   const { id } = useParams({ from: "/resumo/$id" });
-  const { db, hydrated, getPelada } = useStore();
+  const { db, hydrated, getMarcolada } = useStore();
   const [sharing, setSharing] = useState(false);
-  const pelada = getPelada(id);
+  const marcolada = getMarcolada(id);
 
-  if (!pelada) {
+  if (!marcolada) {
     return (
       <main className="min-h-screen">
         <PageHeader title="Resumo" back="/" />
         <div className="mx-auto max-w-3xl px-4 py-6">
           {hydrated ? (
-            <EmptyState icon={<Trophy className="h-6 w-6" />} title="Pelada não encontrada" />
+            <EmptyState icon={<Trophy className="h-6 w-6" />} title="Marcolada não encontrada" />
           ) : null}
         </div>
       </main>
     );
   }
 
-  const stats = playerStats([pelada], db.players);
-  const totals = peladaTotals(pelada);
-  const teams = rankTeams(pelada);
-  const finished = pelada.matches.filter((m) => m.status === "finished");
+  const stats = playerStats([marcolada], db.players);
+  const totals = marcoladaTotals(marcolada);
+  const teams = rankTeams(marcolada);
+  const finished = marcolada.matches.filter((m) => m.status === "finished");
   const withGoals = finished
     .map((m) => ({ m, s: matchScore(m) }))
     .map((x) => ({ ...x, total: x.s.a + x.s.b, diff: Math.abs(x.s.a - x.s.b) }));
@@ -66,19 +66,19 @@ function ResumoPage() {
   ];
   const nums = [topBy(stats, "goals")?.goals, topBy(stats, "assists")?.assists, topBy(stats, "participations")?.participations];
 
-  const teamName = (tid: string) => pelada.teams.find((t) => t.id === tid)?.name ?? "Time";
+  const teamName = (tid: string) => marcolada.teams.find((t) => t.id === tid)?.name ?? "Time";
 
   return (
     <main className="min-h-screen pb-28">
-      <PageHeader title="Resumo da pelada" subtitle={pelada.name} back="/" />
+      <PageHeader title="Resumo da marcolada" subtitle={marcolada.name} back="/" />
 
       <section className="hero-blue px-4 py-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold tracking-[0.22em] uppercase opacity-75">
-            {pelada.date.split("-").reverse().join("/")}
-            {pelada.location ? ` · ${pelada.location}` : ""}
+            {marcolada.date.split("-").reverse().join("/")}
+            {marcolada.location ? ` · ${marcolada.location}` : ""}
           </p>
-          <h2 className="mt-2 font-display text-2xl font-extrabold sm:text-3xl">{pelada.name}</h2>
+          <h2 className="mt-2 font-display text-2xl font-extrabold sm:text-3xl">{marcolada.name}</h2>
           <div className="mt-5 grid grid-cols-3 gap-3">
             {[
               { l: "Gols", v: totals.goals },
@@ -186,7 +186,7 @@ function ResumoPage() {
             <PlayerRanking stats={stats} />
           </TabsContent>
           <TabsContent value="times" className="mt-4">
-            <TeamRanking pelada={pelada} />
+            <TeamRanking marcolada={marcolada} />
           </TabsContent>
           <TabsContent value="partidas" className="mt-4">
             {finished.length === 0 ? (
@@ -238,7 +238,7 @@ function ResumoPage() {
             onClick={async () => {
               setSharing(true);
               try {
-                await shareSummary(pelada, db.players);
+                await shareSummary(marcolada, db.players);
               } catch {
                 toast.error("Não foi possível gerar a imagem");
               } finally {

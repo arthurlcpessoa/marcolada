@@ -5,14 +5,14 @@ import { Avatar, EmptyState, PageHeader } from "@/components/marcolada";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useStore } from "@/lib/store";
-import { displayName, peladaTotals, playerStats, rankTeams } from "@/lib/stats";
+import { displayName, marcoladaTotals, playerStats, rankTeams } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/historico")({
   head: () => ({
     meta: [
       { title: "Histórico da Marcolada — Marcolada Stats" },
-      { name: "description", content: "Consulte peladas anteriores e os rankings históricos da turma." },
+      { name: "description", content: "Consulte marcoladas anteriores e os rankings históricos da turma." },
       { property: "og:title", content: "Histórico da Marcolada — Marcolada Stats" },
       { property: "og:description", content: "Maiores artilheiros, assistentes e times vencedores de todos os tempos." },
     ],
@@ -35,7 +35,7 @@ function HistoricoPage() {
   const [query, setQuery] = useState("");
   const [date, setDate] = useState("");
 
-  const past = db.peladas.filter((p) => p.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
+  const past = db.marcoladas.filter((p) => p.status === "finished").sort((a, b) => b.createdAt - a.createdAt);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -68,7 +68,7 @@ function HistoricoPage() {
 
   return (
     <main className="min-h-screen pb-12">
-      <PageHeader title="Histórico" subtitle="Peladas e recordes de todos os tempos" back="/" />
+      <PageHeader title="Histórico" subtitle="Marcoladas e recordes de todos os tempos" back="/" />
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-5">
         <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
           <div className="relative min-w-0">
@@ -85,20 +85,20 @@ function HistoricoPage() {
 
         <section>
           <h2 className="mb-3 text-sm font-bold tracking-[0.12em] text-muted-foreground uppercase">
-            Peladas ({filtered.length})
+            Marcoladas ({filtered.length})
           </h2>
           {past.length === 0 ? (
             <EmptyState
               icon={<CalendarDays className="h-6 w-6" />}
-              title="Nenhuma pelada encerrada"
+              title="Nenhuma marcolada encerrada"
               description="Assim que você encerrar uma marcolada, ela fica guardada aqui."
             />
           ) : filtered.length === 0 ? (
-            <EmptyState title="Nada encontrado" description="Ajuste os filtros para ver outras peladas." />
+            <EmptyState title="Nada encontrado" description="Ajuste os filtros para ver outras marcoladas." />
           ) : (
             <ul className="space-y-2">
               {filtered.map((p) => {
-                const t = peladaTotals(p);
+                const t = marcoladaTotals(p);
                 return (
                   <li key={p.id}>
                     <Link
@@ -135,7 +135,7 @@ function HistoricoPage() {
             Rankings históricos
           </h2>
           {stats.length === 0 ? (
-            <EmptyState title="Sem dados históricos" description="Encerre uma pelada para começar os recordes." />
+            <EmptyState title="Sem dados históricos" description="Encerre uma marcolada para começar os recordes." />
           ) : (
             <Tabs defaultValue="goals">
               <TabsList className="w-full overflow-x-auto">

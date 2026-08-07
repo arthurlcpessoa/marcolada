@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { newMatch, uid, useStore } from "@/lib/store";
 import { displayName, formatClock, matchScore } from "@/lib/stats";
-import type { GoalEvent, Match, Pelada, Player, Team } from "@/lib/types";
+import type { GoalEvent, Match, Marcolada, Player, Team } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/partida")({
@@ -54,37 +54,37 @@ export const Route = createFileRoute("/partida")({
 
 function PartidaPage() {
   const navigate = useNavigate();
-  const { db, hydrated, activePelada, updatePelada } = useStore();
+  const { db, hydrated, activeMarcolada, updateMarcolada } = useStore();
 
-  if (hydrated && !activePelada) {
+  if (hydrated && !activeMarcolada) {
     return (
       <main className="min-h-screen">
         <PageHeader title="Partida" back="/" />
         <div className="mx-auto max-w-3xl px-4 py-6">
           <EmptyState
             icon={<Trophy className="h-6 w-6" />}
-            title="Nenhuma pelada em andamento"
-            description="Crie uma pelada para começar a registrar as partidas."
-            action={<Button onClick={() => navigate({ to: "/nova" })}>Nova pelada</Button>}
+            title="Nenhuma marcolada em andamento"
+            description="Crie uma marcolada para começar a registrar as partidas."
+            action={<Button onClick={() => navigate({ to: "/nova" })}>Nova marcolada</Button>}
           />
         </div>
       </main>
     );
   }
 
-  const pelada = activePelada;
-  if (!pelada) return null;
+  const marcolada = activeMarcolada;
+  if (!marcolada) return null;
 
-  const current = pelada.matches.find((m) => m.status !== "finished");
+  const current = marcolada.matches.find((m) => m.status !== "finished");
   const getPlayer = (id: string | null | undefined) =>
     id ? db.players.find((p) => p.id === id) : undefined;
 
   if (!current) {
     return (
       <MatchSetup
-        pelada={pelada}
+        marcolada={marcolada}
         onStart={(a, b) =>
-          updatePelada(pelada.id, (p) => ({
+          updateMarcolada(marcolada.id, (p) => ({
             ...p,
             matches: [...p.matches, newMatch(p.matches.length + 1, a, b)],
           }))
@@ -93,14 +93,14 @@ function PartidaPage() {
     );
   }
 
-  return <LiveMatch pelada={pelada} match={current} getPlayer={getPlayer} />;
+  return <LiveMatch marcolada={marcolada} match={current} getPlayer={getPlayer} />;
 }
 
-function MatchSetup({ pelada, onStart }: { pelada: Pelada; onStart: (a: Team, b: Team) => void }) {
+function MatchSetup({ marcolada, onStart }: { marcolada: Marcolada; onStart: (a: Team, b: Team) => void }) {
   const navigate = useNavigate();
-  const { updatePelada } = useStore();
-  const teams = pelada.teams.filter((t) => t.playerIds.length > 0);
-  const last = [...pelada.matches].reverse()[0];
+  const { updateMarcolada } = useStore();
+  const teams = marcolada.teams.filter((t) => t.playerIds.length > 0);
+  const last = [...marcolada.matches].reverse()[0];
   const [a, setA] = useState<string>(last?.teamAId ?? teams[0]?.id ?? "");
   const [b, setB] = useState<string>(last?.teamBId ?? teams[1]?.id ?? "");
   const [confirmEnd, setConfirmEnd] = useState(false);
@@ -112,13 +112,13 @@ function MatchSetup({ pelada, onStart }: { pelada: Pelada; onStart: (a: Team, b:
 
   const teamA = teams.find((t) => t.id === a);
   const teamB = teams.find((t) => t.id === b);
-  const played = pelada.matches.filter((m) => m.status === "finished");
+  const played = marcolada.matches.filter((m) => m.status === "finished");
 
   return (
     <main className="min-h-screen pb-28">
       <PageHeader
         title="Próxima partida"
-        subtitle={pelada.name}
+        subtitle={marcolada.name}
         back="/"
         action={
           <Link
@@ -150,7 +150,7 @@ function MatchSetup({ pelada, onStart }: { pelada: Pelada; onStart: (a: Team, b:
               disabled={!teamA || !teamB || a === b}
               onClick={() => teamA && teamB && onStart(teamA, teamB)}
             >
-              <Play className="h-5 w-5" /> Iniciar partida {pelada.matches.length + 1}
+              <Play className="h-5 w-5" /> Iniciar partida {marcolada.matches.length + 1}
             </Button>
             <div className="grid gap-2 sm:grid-cols-2">
               <Button variant="secondary" className="h-12" onClick={() => navigate({ to: "/times" })}>
@@ -170,7 +170,7 @@ function MatchSetup({ pelada, onStart }: { pelada: Pelada; onStart: (a: Team, b:
             </h2>
             <ul className="space-y-2">
               {played.map((m) => (
-                <MatchRow key={m.id} pelada={pelada} match={m} />
+                <MatchRow key={m.id} marcolada={marcolada} match={m} />
               ))}
             </ul>
           </section>
@@ -181,25 +181,25 @@ function MatchSetup({ pelada, onStart }: { pelada: Pelada; onStart: (a: Team, b:
           className="h-12 w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
           onClick={() => setConfirmEnd(true)}
         >
-          <Flag className="h-4 w-4" /> Encerrar pelada
+          <Flag className="h-4 w-4" /> Encerrar marcolada
         </Button>
       </div>
 
       <AlertDialog open={confirmEnd} onOpenChange={setConfirmEnd}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Encerrar a pelada?</AlertDialogTitle>
+            <AlertDialogTitle>Encerrar a marcolada?</AlertDialogTitle>
             <AlertDialogDescription>
               As estatísticas serão fechadas e você verá a tela de premiação. Não será possível
-              registrar novas partidas nesta pelada.
+              registrar novas partidas nesta marcolada.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Voltar</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                updatePelada(pelada.id, (p) => ({ ...p, status: "finished", endedAt: Date.now() }));
-                navigate({ to: "/resumo/$id", params: { id: pelada.id } });
+                updateMarcolada(marcolada.id, (p) => ({ ...p, status: "finished", endedAt: Date.now() }));
+                navigate({ to: "/resumo/$id", params: { id: marcolada.id } });
               }}
             >
               Encerrar
@@ -251,10 +251,10 @@ function TeamPicker({
   );
 }
 
-function MatchRow({ pelada, match }: { pelada: Pelada; match: Match }) {
+function MatchRow({ marcolada, match }: { marcolada: Marcolada; match: Match }) {
   const { a, b } = matchScore(match);
-  const ta = pelada.teams.find((t) => t.id === match.teamAId);
-  const tb = pelada.teams.find((t) => t.id === match.teamBId);
+  const ta = marcolada.teams.find((t) => t.id === match.teamAId);
+  const tb = marcolada.teams.find((t) => t.id === match.teamBId);
   return (
     <li className="surface grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 p-3">
       <span className="flex min-w-0 items-center gap-2">
@@ -273,16 +273,16 @@ function MatchRow({ pelada, match }: { pelada: Pelada; match: Match }) {
 }
 
 function LiveMatch({
-  pelada,
+  marcolada,
   match,
   getPlayer,
 }: {
-  pelada: Pelada;
+  marcolada: Marcolada;
   match: Match;
   getPlayer: (id: string | null | undefined) => Player | undefined;
 }) {
   const navigate = useNavigate();
-  const { updatePelada, undo, canUndo } = useStore();
+  const { updateMarcolada, undo, canUndo } = useStore();
   const [, tick] = useState(0);
   const [goalOpen, setGoalOpen] = useState(false);
   const [scoreOpen, setScoreOpen] = useState(false);
@@ -294,15 +294,15 @@ function LiveMatch({
     return () => clearInterval(i);
   }, []);
 
-  const teamA = pelada.teams.find((t) => t.id === match.teamAId)!;
-  const teamB = pelada.teams.find((t) => t.id === match.teamBId)!;
+  const teamA = marcolada.teams.find((t) => t.id === match.teamAId)!;
+  const teamB = marcolada.teams.find((t) => t.id === match.teamBId)!;
   const { a, b } = matchScore(match);
   const running = match.status === "live" && match.runningSince;
   const seconds = match.elapsed + (running ? (Date.now() - match.runningSince!) / 1000 : 0);
 
   const patchMatch = (fn: (m: Match) => Match, label?: string) =>
-    updatePelada(
-      pelada.id,
+    updateMarcolada(
+      marcolada.id,
       (p) => ({ ...p, matches: p.matches.map((m) => (m.id === match.id ? fn(m) : m)) }),
       label,
     );
@@ -334,7 +334,7 @@ function LiveMatch({
     <main className="min-h-screen pb-40">
       <PageHeader
         title={`Partida ${match.number}`}
-        subtitle={pelada.name}
+        subtitle={marcolada.name}
         back="/"
         action={
           <Link
@@ -530,7 +530,7 @@ function LiveMatch({
         <AlertDialogContent>
           <AlertDialogTitle>Encerrar a partida {match.number}?</AlertDialogTitle>
           <AlertDialogDescription>
-            Placar final {a} x {b}. Os dados vão para o ranking da pelada.
+            Placar final {a} x {b}. Os dados vão para o ranking da marcolada.
           </AlertDialogDescription>
           <AlertDialogFooter>
             <AlertDialogCancel>Continuar jogando</AlertDialogCancel>
