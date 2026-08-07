@@ -167,11 +167,11 @@ function Home() {
               {finished.slice(0, 3).map((p) => {
                 const t = marcoladaTotals(p);
                 return (
-                  <li key={p.id}>
+                  <li key={p.id} className="relative">
                     <Link
                       to="/resumo/$id"
                       params={{ id: p.id }}
-                      className="surface flex items-center gap-3 p-4 transition-shadow hover:shadow-[var(--shadow-lift)]"
+                      className="surface flex items-center gap-3 p-4 pr-14 transition-shadow hover:shadow-[var(--shadow-lift)]"
                     >
                       <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-accent text-accent-foreground">
                         <Trophy className="h-5 w-5" />
@@ -191,6 +191,11 @@ function Home() {
                         </span>
                       </span>
                     </Link>
+                    <DeleteMarcoladaButton
+                      id={p.id}
+                      name={p.name}
+                      className="absolute top-1/2 right-3 -translate-y-1/2"
+                    />
                   </li>
                 );
               })}
