@@ -15,6 +15,7 @@ import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as JogadoresRouteImport } from './routes/jogadores'
 import { Route as NovaRouteImport } from './routes/nova'
 import { Route as PartidaRouteImport } from './routes/partida'
+import { Route as SupabaseStatusRouteImport } from './routes/supabase-status'
 import { Route as TimesRouteImport } from './routes/times'
 import { Route as ResumoIdRouteImport } from './routes/resumo.$id'
 
@@ -48,6 +49,11 @@ const PartidaRoute = PartidaRouteImport.update({
   path: '/partida',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SupabaseStatusRoute = SupabaseStatusRouteImport.update({
+  id: '/supabase-status',
+  path: '/supabase-status',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TimesRoute = TimesRouteImport.update({
   id: '/times',
   path: '/times',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/jogadores': typeof JogadoresRoute
   '/nova': typeof NovaRoute
   '/partida': typeof PartidaRoute
+  '/supabase-status': typeof SupabaseStatusRoute
   '/times': typeof TimesRoute
   '/resumo/$id': typeof ResumoIdRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/jogadores': typeof JogadoresRoute
   '/nova': typeof NovaRoute
   '/partida': typeof PartidaRoute
+  '/supabase-status': typeof SupabaseStatusRoute
   '/times': typeof TimesRoute
   '/resumo/$id': typeof ResumoIdRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/jogadores': typeof JogadoresRoute
   '/nova': typeof NovaRoute
   '/partida': typeof PartidaRoute
+  '/supabase-status': typeof SupabaseStatusRoute
   '/times': typeof TimesRoute
   '/resumo/$id': typeof ResumoIdRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/jogadores'
     | '/nova'
     | '/partida'
+    | '/supabase-status'
     | '/times'
     | '/resumo/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/jogadores'
     | '/nova'
     | '/partida'
+    | '/supabase-status'
     | '/times'
     | '/resumo/$id'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/jogadores'
     | '/nova'
     | '/partida'
+    | '/supabase-status'
     | '/times'
     | '/resumo/$id'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   JogadoresRoute: typeof JogadoresRoute
   NovaRoute: typeof NovaRoute
   PartidaRoute: typeof PartidaRoute
+  SupabaseStatusRoute: typeof SupabaseStatusRoute
   TimesRoute: typeof TimesRoute
   ResumoIdRoute: typeof ResumoIdRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PartidaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/supabase-status': {
+      id: '/supabase-status'
+      path: '/supabase-status'
+      fullPath: '/supabase-status'
+      preLoaderRoute: typeof SupabaseStatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/times': {
       id: '/times'
       path: '/times'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   JogadoresRoute: JogadoresRoute,
   NovaRoute: NovaRoute,
   PartidaRoute: PartidaRoute,
+  SupabaseStatusRoute: SupabaseStatusRoute,
   TimesRoute: TimesRoute,
   ResumoIdRoute: ResumoIdRoute,
 }
