@@ -185,14 +185,73 @@ function MatchSetup({
               <div className="text-center font-display text-sm font-bold text-muted-foreground">VS</div>
               <TeamPicker label="Visitante" teams={teams} value={b} exclude={a} onChange={setB} />
             </div>
+
+            {rotation && teamA && teamB ? (
+              <div className="surface space-y-3 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-bold tracking-[0.12em] text-muted-foreground uppercase">
+                    Escalação da partida
+                  </h2>
+                  <span className="text-xs text-muted-foreground tabular">
+                    {countA} x {countB} · {roster.length - countA - countB} fora
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Toque para mover cada jogador. A escalação começa igual à da partida anterior.
+                </p>
+                <ul className="space-y-2">
+                  {roster.map((p) => {
+                    const value = assign[p.id] ?? "out";
+                    const set = (v: "a" | "b" | "out") =>
+                      setAssign((prev) => ({ ...prev, [p.id]: v }));
+                    return (
+                      <li key={p.id} className="flex items-center gap-2 rounded-xl border border-border p-2">
+                        <Avatar player={p} size={28} />
+                        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                          {displayName(p)}
+                        </span>
+                        <div className="flex shrink-0 gap-1">
+                          {(
+                            [
+                              { key: "a" as const, label: teamA.name, color: teamA.color },
+                              { key: "out" as const, label: "Fora", color: null },
+                              { key: "b" as const, label: teamB.name, color: teamB.color },
+                            ]
+                          ).map((opt) => (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              onClick={() => set(opt.key)}
+                              className={cn(
+                                "inline-flex max-w-[6.5rem] items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-semibold transition-colors",
+                                value === opt.key
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border",
+                              )}
+                            >
+                              {opt.color ? <TeamDot color={opt.color} /> : null}
+                              <span className="truncate">{opt.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
+
             <Button
               size="lg"
               className="h-14 w-full text-base font-semibold"
-              disabled={!teamA || !teamB || a === b}
-              onClick={() => teamA && teamB && onStart(teamA, teamB)}
+              disabled={!canStart}
+              onClick={() =>
+                teamA && teamB && onStart(teamA, teamB, rotation ? lineupsPayload : undefined)
+              }
             >
               <Play className="h-5 w-5" /> Iniciar partida {marcolada.matches.length + 1}
             </Button>
+
             <div className="grid gap-2 sm:grid-cols-2">
               <Button variant="secondary" className="h-12" onClick={() => navigate({ to: "/times" })}>
                 Editar escalações
