@@ -44,6 +44,8 @@ export type Match = {
   runningSince?: number | null | undefined;
 };
 
+export type TeamMode = "fixed" | "rotation";
+
 export type Marcolada = {
   id: string;
   name: string;
@@ -52,8 +54,11 @@ export type Marcolada = {
   duration?: string | undefined;
   format?: string | undefined;
   limit?: string | undefined;
+  /** Times fixos durante toda a marcolada ou rodízio com escalação por partida. */
+  teamMode?: TeamMode | undefined;
   status: "active" | "finished";
   rosterIds: string[];
+
   teams: Team[];
   matches: Match[];
   createdAt: number;
