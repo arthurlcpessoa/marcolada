@@ -83,10 +83,11 @@ function PartidaPage() {
     return (
       <MatchSetup
         marcolada={marcolada}
-        onStart={(a, b) =>
+        players={db.players}
+        onStart={(a, b, lineups) =>
           updateMarcolada(marcolada.id, (p) => ({
             ...p,
-            matches: [...p.matches, newMatch(p.matches.length + 1, a, b)],
+            matches: [...p.matches, newMatch(p.matches.length + 1, a, b, lineups)],
           }))
         }
       />
@@ -96,7 +97,15 @@ function PartidaPage() {
   return <LiveMatch marcolada={marcolada} match={current} getPlayer={getPlayer} />;
 }
 
-function MatchSetup({ marcolada, onStart }: { marcolada: Marcolada; onStart: (a: Team, b: Team) => void }) {
+function MatchSetup({
+  marcolada,
+  players,
+  onStart,
+}: {
+  marcolada: Marcolada;
+  players: Player[];
+  onStart: (a: Team, b: Team, lineups?: { a: string[]; b: string[] }) => void;
+}) {
   const navigate = useNavigate();
   const { updateMarcolada } = useStore();
   const teams = marcolada.teams.filter((t) => t.playerIds.length > 0);
@@ -104,15 +113,47 @@ function MatchSetup({ marcolada, onStart }: { marcolada: Marcolada; onStart: (a:
   const [a, setA] = useState<string>(last?.teamAId ?? teams[0]?.id ?? "");
   const [b, setB] = useState<string>(last?.teamBId ?? teams[1]?.id ?? "");
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const rotation = (marcolada.teamMode ?? "fixed") === "rotation";
 
   useEffect(() => {
     if (!a && teams[0]) setA(last?.teamAId ?? teams[0].id);
     if (!b && teams[1]) setB(last?.teamBId ?? teams[1].id);
   }, [a, b, teams, last]);
 
+  const roster = useMemo(() => {
+    const ids = marcolada.rosterIds.length
+      ? marcolada.rosterIds
+      : [...new Set(marcolada.teams.flatMap((t) => t.playerIds))];
+    return ids.map((id) => players.find((p) => p.id === id)).filter(Boolean) as Player[];
+  }, [marcolada.rosterIds, marcolada.teams, players]);
+
+  const [assign, setAssign] = useState<Record<string, "a" | "b" | "out">>({});
+
+  useEffect(() => {
+    if (!rotation || !a || !b) return;
+    const prevA = last ? (last.lineups[a] ?? null) : null;
+    const prevB = last ? (last.lineups[b] ?? null) : null;
+    const fallbackA = marcolada.teams.find((t) => t.id === a)?.playerIds ?? [];
+    const fallbackB = marcolada.teams.find((t) => t.id === b)?.playerIds ?? [];
+    const inA = new Set(prevA ?? fallbackA);
+    const inB = new Set(prevB ?? fallbackB);
+    const next: Record<string, "a" | "b" | "out"> = {};
+    for (const p of roster) next[p.id] = inA.has(p.id) ? "a" : inB.has(p.id) ? "b" : "out";
+    setAssign(next);
+  }, [rotation, a, b, last, roster, marcolada.teams]);
+
+  const countA = roster.filter((p) => assign[p.id] === "a").length;
+  const countB = roster.filter((p) => assign[p.id] === "b").length;
+
   const teamA = teams.find((t) => t.id === a);
   const teamB = teams.find((t) => t.id === b);
   const played = marcolada.matches.filter((m) => m.status === "finished");
+  const lineupsPayload = {
+    a: roster.filter((p) => assign[p.id] === "a").map((p) => p.id),
+    b: roster.filter((p) => assign[p.id] === "b").map((p) => p.id),
+  };
+  const canStart = !!teamA && !!teamB && a !== b && (!rotation || (countA > 0 && countB > 0));
+
 
   return (
     <main className="min-h-screen pb-28">
