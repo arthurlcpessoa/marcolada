@@ -522,6 +522,10 @@ export function newMatch(
   number: number,
   teamA: Team,
   teamB: Team,
+  lineups?: {
+    a: string[];
+    b: string[];
+  },
 ): Match {
   return {
     id: uid(),
@@ -531,13 +535,16 @@ export function newMatch(
 
     lineups: {
       [teamA.id]: [
-        ...teamA.playerIds,
+        ...(lineups?.a ??
+          teamA.playerIds),
       ],
 
       [teamB.id]: [
-        ...teamB.playerIds,
+        ...(lineups?.b ??
+          teamB.playerIds),
       ],
     },
+
 
     goals: [],
 
