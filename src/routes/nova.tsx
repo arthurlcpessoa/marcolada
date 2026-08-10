@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { uid, useStore } from "@/lib/store";
-import type { Marcolada } from "@/lib/types";
+import type { Marcolada, TeamMode } from "@/lib/types";
+import { TeamModeSelector } from "@/components/team-mode";
 
 export const Route = createFileRoute("/nova")({
   head: () => ({
@@ -37,6 +38,7 @@ function NovaMarcolada() {
   const [duration, setDuration] = useState("");
   const [format, setFormat] = useState("");
   const [limit, setLimit] = useState("");
+  const [teamMode, setTeamMode] = useState<TeamMode>("fixed");
 
   const create = () => {
     if (!name.trim() || !date) {
@@ -51,6 +53,7 @@ function NovaMarcolada() {
       duration: duration.trim() || undefined,
       format: format.trim() || undefined,
       limit: limit.trim() || undefined,
+      teamMode,
       status: "active",
       rosterIds: [],
       teams: [],
@@ -101,6 +104,16 @@ function NovaMarcolada() {
               <Input value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="2 gols ou 10 min" />
             </Field>
           </div>
+          <div className="space-y-2 border-t border-border pt-4">
+            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Formato dos times
+            </Label>
+            <TeamModeSelector value={teamMode} onChange={setTeamMode} />
+            <p className="text-xs text-muted-foreground">
+              Você pode mudar isso depois, na tela de times, se a dinâmica da marcolada mudar.
+            </p>
+          </div>
+
           <p className="text-xs text-muted-foreground">
             Somente nome e data são obrigatórios. Os demais campos podem ficar em branco.
           </p>

@@ -83,10 +83,11 @@ function PartidaPage() {
     return (
       <MatchSetup
         marcolada={marcolada}
-        onStart={(a, b) =>
+        players={db.players}
+        onStart={(a, b, lineups) =>
           updateMarcolada(marcolada.id, (p) => ({
             ...p,
-            matches: [...p.matches, newMatch(p.matches.length + 1, a, b)],
+            matches: [...p.matches, newMatch(p.matches.length + 1, a, b, lineups)],
           }))
         }
       />
@@ -96,7 +97,15 @@ function PartidaPage() {
   return <LiveMatch marcolada={marcolada} match={current} getPlayer={getPlayer} />;
 }
 
-function MatchSetup({ marcolada, onStart }: { marcolada: Marcolada; onStart: (a: Team, b: Team) => void }) {
+function MatchSetup({
+  marcolada,
+  players,
+  onStart,
+}: {
+  marcolada: Marcolada;
+  players: Player[];
+  onStart: (a: Team, b: Team, lineups?: { a: string[]; b: string[] }) => void;
+}) {
   const navigate = useNavigate();
   const { updateMarcolada } = useStore();
   const teams = marcolada.teams.filter((t) => t.playerIds.length > 0);
@@ -104,15 +113,47 @@ function MatchSetup({ marcolada, onStart }: { marcolada: Marcolada; onStart: (a:
   const [a, setA] = useState<string>(last?.teamAId ?? teams[0]?.id ?? "");
   const [b, setB] = useState<string>(last?.teamBId ?? teams[1]?.id ?? "");
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const rotation = (marcolada.teamMode ?? "fixed") === "rotation";
 
   useEffect(() => {
     if (!a && teams[0]) setA(last?.teamAId ?? teams[0].id);
     if (!b && teams[1]) setB(last?.teamBId ?? teams[1].id);
   }, [a, b, teams, last]);
 
+  const roster = useMemo(() => {
+    const ids = marcolada.rosterIds.length
+      ? marcolada.rosterIds
+      : [...new Set(marcolada.teams.flatMap((t) => t.playerIds))];
+    return ids.map((id) => players.find((p) => p.id === id)).filter(Boolean) as Player[];
+  }, [marcolada.rosterIds, marcolada.teams, players]);
+
+  const [assign, setAssign] = useState<Record<string, "a" | "b" | "out">>({});
+
+  useEffect(() => {
+    if (!rotation || !a || !b) return;
+    const prevA = last ? (last.lineups[a] ?? null) : null;
+    const prevB = last ? (last.lineups[b] ?? null) : null;
+    const fallbackA = marcolada.teams.find((t) => t.id === a)?.playerIds ?? [];
+    const fallbackB = marcolada.teams.find((t) => t.id === b)?.playerIds ?? [];
+    const inA = new Set(prevA ?? fallbackA);
+    const inB = new Set(prevB ?? fallbackB);
+    const next: Record<string, "a" | "b" | "out"> = {};
+    for (const p of roster) next[p.id] = inA.has(p.id) ? "a" : inB.has(p.id) ? "b" : "out";
+    setAssign(next);
+  }, [rotation, a, b, last, roster, marcolada.teams]);
+
+  const countA = roster.filter((p) => assign[p.id] === "a").length;
+  const countB = roster.filter((p) => assign[p.id] === "b").length;
+
   const teamA = teams.find((t) => t.id === a);
   const teamB = teams.find((t) => t.id === b);
   const played = marcolada.matches.filter((m) => m.status === "finished");
+  const lineupsPayload = {
+    a: roster.filter((p) => assign[p.id] === "a").map((p) => p.id),
+    b: roster.filter((p) => assign[p.id] === "b").map((p) => p.id),
+  };
+  const canStart = !!teamA && !!teamB && a !== b && (!rotation || (countA > 0 && countB > 0));
+
 
   return (
     <main className="min-h-screen pb-28">
@@ -144,14 +185,73 @@ function MatchSetup({ marcolada, onStart }: { marcolada: Marcolada; onStart: (a:
               <div className="text-center font-display text-sm font-bold text-muted-foreground">VS</div>
               <TeamPicker label="Visitante" teams={teams} value={b} exclude={a} onChange={setB} />
             </div>
+
+            {rotation && teamA && teamB ? (
+              <div className="surface space-y-3 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h2 className="text-sm font-bold tracking-[0.12em] text-muted-foreground uppercase">
+                    Escalação da partida
+                  </h2>
+                  <span className="text-xs text-muted-foreground tabular">
+                    {countA} x {countB} · {roster.length - countA - countB} fora
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Toque para mover cada jogador. A escalação começa igual à da partida anterior.
+                </p>
+                <ul className="space-y-2">
+                  {roster.map((p) => {
+                    const value = assign[p.id] ?? "out";
+                    const set = (v: "a" | "b" | "out") =>
+                      setAssign((prev) => ({ ...prev, [p.id]: v }));
+                    return (
+                      <li key={p.id} className="flex items-center gap-2 rounded-xl border border-border p-2">
+                        <Avatar player={p} size={28} />
+                        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+                          {displayName(p)}
+                        </span>
+                        <div className="flex shrink-0 gap-1">
+                          {(
+                            [
+                              { key: "a" as const, label: teamA.name, color: teamA.color },
+                              { key: "out" as const, label: "Fora", color: null },
+                              { key: "b" as const, label: teamB.name, color: teamB.color },
+                            ]
+                          ).map((opt) => (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              onClick={() => set(opt.key)}
+                              className={cn(
+                                "inline-flex max-w-[6.5rem] items-center gap-1 rounded-lg border px-2 py-1.5 text-xs font-semibold transition-colors",
+                                value === opt.key
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border",
+                              )}
+                            >
+                              {opt.color ? <TeamDot color={opt.color} /> : null}
+                              <span className="truncate">{opt.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ) : null}
+
             <Button
               size="lg"
               className="h-14 w-full text-base font-semibold"
-              disabled={!teamA || !teamB || a === b}
-              onClick={() => teamA && teamB && onStart(teamA, teamB)}
+              disabled={!canStart}
+              onClick={() =>
+                teamA && teamB && onStart(teamA, teamB, rotation ? lineupsPayload : undefined)
+              }
             >
               <Play className="h-5 w-5" /> Iniciar partida {marcolada.matches.length + 1}
             </Button>
+
             <div className="grid gap-2 sm:grid-cols-2">
               <Button variant="secondary" className="h-12" onClick={() => navigate({ to: "/times" })}>
                 Editar escalações
