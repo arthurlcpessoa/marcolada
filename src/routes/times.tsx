@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { newTeam, useStore } from "@/lib/store";
 import { displayName } from "@/lib/stats";
-import { TEAM_COLORS, type Player, type Team } from "@/lib/types";
+import { TEAM_COLORS, type Player, type Team, type TeamMode } from "@/lib/types";
+import { TeamModeSelector } from "@/components/team-mode";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/times")({
@@ -131,6 +132,23 @@ function TimesPage() {
       />
 
       <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
+        <div className="surface space-y-2 p-4">
+          <h2 className="text-sm font-bold tracking-[0.12em] text-muted-foreground uppercase">
+            Formato dos times
+          </h2>
+          <TeamModeSelector
+            value={marcolada.teamMode ?? "fixed"}
+            onChange={(mode: TeamMode) =>
+              updateMarcolada(marcolada.id, (p) => ({ ...p, teamMode: mode }))
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            {(marcolada.teamMode ?? "fixed") === "rotation"
+              ? "Antes de cada partida você define a escalação, incluindo quem fica de fora."
+              : "As equipes montadas aqui valem para todas as partidas da marcolada."}
+          </p>
+        </div>
+
         <div className="surface p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-sm font-bold tracking-[0.12em] text-muted-foreground uppercase">
