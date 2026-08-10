@@ -28,6 +28,7 @@ import {
 
 const KEY = "marcolada:v1";
 const MIGRATION_KEY = "marcolada:supabase-migrated:v2";
+console.log("[Marcolada DEBUG] Supabase configurado:", isSupabaseConfigured);
 
 function loadLocal(): DB {
   if (typeof window === "undefined") return emptyDB;
