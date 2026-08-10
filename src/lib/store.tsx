@@ -17,20 +17,14 @@ import {
   type Team,
 } from "./types";
 import {
-  hasData,
-  loadDBFromSupabase,
-  syncDBDiff,
+  deletePlayerRemote,
+  loadPlayers,
+  savePlayer,
 } from "./supabase-db";
-import {
-  isSupabaseConfigured,
-  supabase,
-} from "./supabase";
 
 const KEY = "marcolada:v1";
-const MIGRATION_KEY = "marcolada:supabase-migrated:v2";
-console.log("[Marcolada DEBUG] Supabase configurado:", isSupabaseConfigured);
 
-function loadLocal(): DB {
+function load(): DB {
   if (typeof window === "undefined") return emptyDB;
 
   try {
@@ -47,20 +41,6 @@ function loadLocal(): DB {
   } catch {
     return emptyDB;
   }
-}
-
-function saveLocal(db: DB) {
-  if (typeof window === "undefined") return;
-
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(db));
-  } catch {
-    /* quota */
-  }
-}
-
-function sameDB(a: DB, b: DB) {
-  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 export const uid = () =>
@@ -95,14 +75,17 @@ type Ctx = {
   ) => void;
 };
 
-const StoreContext = createContext<Ctx | null>(null);
+const StoreContext =
+  createContext<Ctx | null>(null);
 
 export function StoreProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [db, setDb] = useState<DB>(emptyDB);
+  const [db, setDb] =
+    useState<DB>(emptyDB);
+
   const [hydrated, setHydrated] =
     useState(false);
 
@@ -114,121 +97,82 @@ export function StoreProvider({
     useState<string[]>([]);
 
   /*
-   * Guarda qual versão do estado já foi
-   * sincronizada com o Supabase.
+   * Guarda a última lista de jogadores
+   * conhecida pelo Supabase.
+   * Assim conseguimos detectar criação,
+   * edição e exclusão.
    */
-  const syncedDB = useRef<DB>(emptyDB);
+  const remotePlayersRef =
+    useRef<Player[]>([]);
 
   /*
-   * Serializa gravações para evitar que
-   * duas alterações concorrentes se
-   * atropelhem.
-   */
-  const syncQueue = useRef<
-    Promise<void>
-  >(Promise.resolve());
-
-  /*
-   * Inicialização:
+   * Carrega primeiro o localStorage para
+   * preservar tudo que já existe.
    *
-   * 1. lê o localStorage;
-   * 2. busca o Supabase;
-   * 3. se Supabase tiver dados, ele vence;
-   * 4. se Supabase estiver vazio e houver
-   *    dados antigos locais, migra uma vez;
-   * 5. localStorage continua como cache.
+   * Depois busca os jogadores do Supabase
+   * e combina as duas listas.
    */
   useEffect(() => {
     let cancelled = false;
 
     async function hydrate() {
-      const localDB = loadLocal();
-
-      if (!isSupabaseConfigured) {
-        if (cancelled) return;
-
-        syncedDB.current = localDB;
-        setDb(localDB);
-        setHydrated(true);
-
-        return;
-      }
+      const localDB = load();
 
       try {
-        const remoteDB =
-          await loadDBFromSupabase();
+        const remotePlayers =
+          await loadPlayers();
 
         if (cancelled) return;
 
-        if (hasData(remoteDB)) {
-          syncedDB.current = remoteDB;
+        remotePlayersRef.current =
+          remotePlayers;
 
-          setDb(remoteDB);
-          saveLocal(remoteDB);
+        const mergedPlayers =
+          new Map<string, Player>();
 
-          try {
-            window.localStorage.setItem(
-              MIGRATION_KEY,
-              "1",
-            );
-          } catch {
-            /* ignore */
-          }
-
-          setHydrated(true);
-
-          return;
-        }
-
-        const alreadyMigrated =
-          window.localStorage.getItem(
-            MIGRATION_KEY,
-          ) === "1";
-
-        if (
-          hasData(localDB) &&
-          !alreadyMigrated
-        ) {
-          await syncDBDiff(
-            emptyDB,
-            localDB,
+        /*
+         * Supabase primeiro.
+         */
+        for (const player of remotePlayers) {
+          mergedPlayers.set(
+            player.id,
+            player,
           );
-
-          if (cancelled) return;
-
-          syncedDB.current = localDB;
-
-          try {
-            window.localStorage.setItem(
-              MIGRATION_KEY,
-              "1",
-            );
-          } catch {
-            /* ignore */
-          }
-
-          setDb(localDB);
-          saveLocal(localDB);
-          setHydrated(true);
-
-          return;
         }
 
-        syncedDB.current = remoteDB;
-        setDb(remoteDB);
-        saveLocal(remoteDB);
-        setHydrated(true);
+        /*
+         * Dados locais depois.
+         * Se o banco estiver vazio,
+         * Arthur, João Pedro etc.
+         * continuam existindo e serão
+         * enviados ao Supabase logo depois.
+         */
+        for (const player of localDB.players) {
+          mergedPlayers.set(
+            player.id,
+            player,
+          );
+        }
+
+        setDb({
+          ...localDB,
+          players: Array.from(
+            mergedPlayers.values(),
+          ),
+        });
       } catch (error) {
         console.error(
-          "[Marcolada] Falha ao carregar Supabase. Usando cache local:",
+          "[Marcolada] Não foi possível carregar jogadores do Supabase:",
           error,
         );
 
-        if (cancelled) return;
-
-        syncedDB.current = localDB;
-        setDb(localDB);
-        setHydrated(true);
+        if (!cancelled) {
+          setDb(localDB);
+        }
+      } finally {
+        if (!cancelled) {
+          setHydrated(true);
+        }
       }
     }
 
@@ -240,120 +184,107 @@ export function StoreProvider({
   }, []);
 
   /*
-   * Toda alteração continua sendo salva
-   * localmente, mas também é enviada para
-   * o Supabase.
+   * localStorage continua funcionando
+   * normalmente como backup/cache.
    */
   useEffect(() => {
     if (!hydrated) return;
 
-    saveLocal(db);
-
-    if (!isSupabaseConfigured) return;
-
-    const previous =
-      syncedDB.current;
-
-    if (sameDB(previous, db)) return;
-
-    const next = db;
-
-    syncQueue.current =
-      syncQueue.current
-        .then(async () => {
-          await syncDBDiff(
-            previous,
-            next,
-          );
-
-          syncedDB.current = next;
-        })
-        .catch((error) => {
-          console.error(
-            "[Marcolada] Erro ao sincronizar com Supabase:",
-            error,
-          );
-        });
+    try {
+      window.localStorage.setItem(
+        KEY,
+        JSON.stringify(db),
+      );
+    } catch {
+      /* quota */
+    }
   }, [db, hydrated]);
 
   /*
-   * Realtime:
-   * quando outro celular/tablet altera
-   * qualquer tabela, recarrega o estado.
+   * Sincronização simples dos jogadores.
+   *
+   * Novo jogador -> INSERT/UPSERT
+   * Estrelas/nome alterados -> UPSERT
+   * Jogador removido -> DELETE
    */
   useEffect(() => {
-    if (
-      !hydrated ||
-      !isSupabaseConfigured
-    ) {
-      return;
+    if (!hydrated) return;
+
+    const previous =
+      remotePlayersRef.current;
+
+    const current =
+      db.players;
+
+    const previousById =
+      new Map(
+        previous.map((player) => [
+          player.id,
+          player,
+        ]),
+      );
+
+    const currentById =
+      new Map(
+        current.map((player) => [
+          player.id,
+          player,
+        ]),
+      );
+
+    async function syncPlayers() {
+      try {
+        /*
+         * Criações e alterações.
+         */
+        for (const player of current) {
+          const old =
+            previousById.get(
+              player.id,
+            );
+
+          if (
+            !old ||
+            JSON.stringify(old) !==
+              JSON.stringify(player)
+          ) {
+            await savePlayer(player);
+          }
+        }
+
+        /*
+         * Exclusões.
+         */
+        for (const player of previous) {
+          if (
+            !currentById.has(
+              player.id,
+            )
+          ) {
+            await deletePlayerRemote(
+              player.id,
+            );
+          }
+        }
+
+        remotePlayersRef.current =
+          current.map((player) => ({
+            ...player,
+          }));
+
+        console.log(
+          "[Marcolada] Jogadores sincronizados com Supabase.",
+        );
+      } catch (error) {
+        console.error(
+          "[Marcolada] Erro ao sincronizar jogadores:",
+          error,
+        );
+      }
     }
 
-    let timer:
-      | ReturnType<typeof setTimeout>
-      | undefined;
-
-    let cancelled = false;
-
-    const reloadRemote =
-      async () => {
-        try {
-          const remoteDB =
-            await loadDBFromSupabase();
-
-          if (cancelled) return;
-
-          syncedDB.current = remoteDB;
-          saveLocal(remoteDB);
-
-          setDb((current) =>
-            sameDB(current, remoteDB)
-              ? current
-              : remoteDB,
-          );
-        } catch (error) {
-          console.error(
-            "[Marcolada] Erro no realtime:",
-            error,
-          );
-        }
-      };
-
-    const scheduleReload = () => {
-      if (timer) clearTimeout(timer);
-
-      timer = setTimeout(
-        reloadRemote,
-        250,
-      );
-    };
-
-    const channel = supabase
-      .channel(
-        "marcolada-realtime",
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-        },
-        scheduleReload,
-      )
-      .subscribe();
-
-    return () => {
-      cancelled = true;
-
-      if (timer) {
-        clearTimeout(timer);
-      }
-
-      supabase.removeChannel(
-        channel,
-      );
-    };
-  }, [hydrated]);
+    syncPlayers();
+  }, [db.players, hydrated]);
 
   const update = useCallback(
     (
