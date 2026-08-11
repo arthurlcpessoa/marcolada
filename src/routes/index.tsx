@@ -46,12 +46,21 @@ function Home() {
         <div className="mx-auto max-w-5xl">
           <div className="flex items-center justify-between gap-3">
             <Logo className="[&_span:last-child_span:last-child]:text-primary-foreground/70" />
-            <Link
-              to="/historico"
-              className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur transition-colors hover:bg-white/25"
-            >
-              <History className="h-3.5 w-3.5" /> Histórico
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/elenco"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur transition-colors hover:bg-white/25"
+              >
+                <Users className="h-3.5 w-3.5" /> Elenco
+              </Link>
+              <Link
+                to="/historico"
+                className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur transition-colors hover:bg-white/25"
+              >
+                <History className="h-3.5 w-3.5" /> Histórico
+              </Link>
+            </div>
+
           </div>
 
           <div className="mt-10 max-w-xl">

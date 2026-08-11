@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ElencoRouteImport } from './routes/elenco'
 import { Route as HistoricoRouteImport } from './routes/historico'
 import { Route as JogadoresRouteImport } from './routes/jogadores'
 import { Route as NovaRouteImport } from './routes/nova'
@@ -27,6 +28,11 @@ const IndexRoute = IndexRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ElencoRoute = ElencoRouteImport.update({
+  id: '/elenco',
+  path: '/elenco',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoricoRoute = HistoricoRouteImport.update({
@@ -68,6 +74,7 @@ const ResumoIdRoute = ResumoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/elenco': typeof ElencoRoute
   '/historico': typeof HistoricoRoute
   '/jogadores': typeof JogadoresRoute
   '/nova': typeof NovaRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/elenco': typeof ElencoRoute
   '/historico': typeof HistoricoRoute
   '/jogadores': typeof JogadoresRoute
   '/nova': typeof NovaRoute
@@ -91,6 +99,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
+  '/elenco': typeof ElencoRoute
   '/historico': typeof HistoricoRoute
   '/jogadores': typeof JogadoresRoute
   '/nova': typeof NovaRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/elenco'
     | '/historico'
     | '/jogadores'
     | '/nova'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/elenco'
     | '/historico'
     | '/jogadores'
     | '/nova'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/dashboard'
+    | '/elenco'
     | '/historico'
     | '/jogadores'
     | '/nova'
@@ -138,6 +150,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DashboardRoute: typeof DashboardRoute
+  ElencoRoute: typeof ElencoRoute
   HistoricoRoute: typeof HistoricoRoute
   JogadoresRoute: typeof JogadoresRoute
   NovaRoute: typeof NovaRoute
@@ -161,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/elenco': {
+      id: '/elenco'
+      path: '/elenco'
+      fullPath: '/elenco'
+      preLoaderRoute: typeof ElencoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/historico': {
@@ -218,6 +238,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DashboardRoute: DashboardRoute,
+  ElencoRoute: ElencoRoute,
   HistoricoRoute: HistoricoRoute,
   JogadoresRoute: JogadoresRoute,
   NovaRoute: NovaRoute,
