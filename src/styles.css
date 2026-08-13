@@ -92,6 +92,9 @@
   --gradient-blue: linear-gradient(140deg, oklch(0.53 0.21 262), oklch(0.42 0.17 258) 55%, oklch(0.3 0.1 262));
   --shadow-soft: 0 1px 2px oklch(0.28 0.09 262 / 0.06), 0 8px 24px -12px oklch(0.28 0.09 262 / 0.18);
   --shadow-lift: 0 2px 4px oklch(0.28 0.09 262 / 0.06), 0 18px 40px -18px oklch(0.28 0.09 262 / 0.3);
+  --neon-blue: oklch(0.62 0.24 262);
+  --neon-glow: 0 0 0 0 oklch(0.53 0.21 262 / 0);
+  --neon-glow-hover: 0 0 20px oklch(0.53 0.21 262 / 0.45), 0 0 40px oklch(0.53 0.21 262 / 0.25), inset 0 0 12px oklch(0.65 0.22 262 / 0.15);
 }
 
 .dark {
