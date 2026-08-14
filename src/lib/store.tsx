@@ -76,6 +76,10 @@ type Ctx = {
     id: string,
     patch: Partial<Omit<Player, "id">>,
   ) => void;
+  deletePlayer: (
+    id: string,
+  ) => Promise<void>;
+
 };
 
 const StoreContext =
