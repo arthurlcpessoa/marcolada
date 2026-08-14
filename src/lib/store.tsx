@@ -263,6 +263,10 @@ export function StoreProvider({
       [update],
     );
 
+  /*
+   * Criação explícita do usuário:
+   * grava no Supabase e reflete localmente.
+   */
   const addPlayer = useCallback(
     (
       p: Omit<Player, "id">,
@@ -280,6 +284,15 @@ export function StoreProvider({
         ],
       }));
 
+      savePlayer(player).catch(
+        (error) => {
+          console.error(
+            "[Marcolada] Erro ao salvar jogador:",
+            error,
+          );
+        },
+      );
+
       return player;
     },
     [update],
@@ -293,22 +306,84 @@ export function StoreProvider({
           Omit<Player, "id">
         >,
       ) => {
+        let updated: Player | null =
+          null;
+
         update((d) => ({
           ...d,
           players:
             d.players.map(
-              (p) =>
-                p.id === id
-                  ? {
-                      ...p,
-                      ...patch,
-                    }
-                  : p,
+              (p) => {
+                if (p.id !== id)
+                  return p;
+
+                updated = {
+                  ...p,
+                  ...patch,
+                };
+
+                return updated;
+              },
+            ),
+        }));
+
+        setTimeout(() => {
+          if (updated) {
+            savePlayer(
+              updated,
+            ).catch((error) => {
+              console.error(
+                "[Marcolada] Erro ao atualizar jogador:",
+                error,
+              );
+            });
+          }
+        }, 0);
+      },
+      [update],
+    );
+
+  /*
+   * Exclusão: DELETE no Supabase primeiro,
+   * estado local só muda após sucesso.
+   */
+  const deletePlayer =
+    useCallback(
+      async (id: string) => {
+        await deletePlayerRemote(id);
+
+        update((d) => ({
+          ...d,
+          players: d.players.filter(
+            (p) => p.id !== id,
+          ),
+          marcoladas:
+            d.marcoladas.map((m) =>
+              m.status === "active"
+                ? {
+                    ...m,
+                    rosterIds:
+                      m.rosterIds.filter(
+                        (x) => x !== id,
+                      ),
+                    teams: m.teams.map(
+                      (t) => ({
+                        ...t,
+                        playerIds:
+                          t.playerIds.filter(
+                            (x) =>
+                              x !== id,
+                          ),
+                      }),
+                    ),
+                  }
+                : m,
             ),
         }));
       },
       [update],
     );
+
 
   const value = useMemo<Ctx>(
     () => ({
