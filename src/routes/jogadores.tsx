@@ -33,7 +33,7 @@ export const Route = createFileRoute("/jogadores")({
 
 function JogadoresPage() {
   const navigate = useNavigate();
-  const { db, hydrated, activeMarcolada, updateMarcolada, addPlayer, updatePlayer, update } = useStore();
+  const { db, hydrated, activeMarcolada, updateMarcolada, addPlayer, updatePlayer, deletePlayer } = useStore();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
