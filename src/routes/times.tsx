@@ -209,9 +209,13 @@ function TimesPage() {
             action={
               <div className="flex flex-wrap justify-center gap-2">
                 <Button onClick={addTeam}>Criar time</Button>
-                <Button variant="secondary" onClick={autoGenerate}>
-                  Sortear times
-                </Button>
+                <DrawDialog
+                  totalPlayers={players.length}
+                  defaultTeams={2}
+                  onDraw={autoGenerate}
+                  trigger={<Button variant="secondary">Sortear times</Button>}
+                />
+
               </div>
             }
           />
