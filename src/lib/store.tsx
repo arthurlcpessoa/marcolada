@@ -416,6 +416,7 @@ export function StoreProvider({
       deleteMarcolada,
       addPlayer,
       updatePlayer,
+      deletePlayer,
     }),
     [
       db,
@@ -427,7 +428,9 @@ export function StoreProvider({
       deleteMarcolada,
       addPlayer,
       updatePlayer,
+      deletePlayer,
     ],
+
   );
 
   return (
