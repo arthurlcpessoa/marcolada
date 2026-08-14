@@ -104,26 +104,19 @@ export function StoreProvider({
     useState<string[]>([]);
 
   /*
-   * Guarda a última lista de jogadores
-   * conhecida pelo Supabase.
-   * Assim conseguimos detectar criação,
-   * edição e exclusão.
-   */
-  const remotePlayersRef =
-    useRef<Player[]>([]);
-
-  /*
-   * Carrega primeiro o localStorage para
-   * preservar tudo que já existe.
+   * Hidratação:
+   * - marcoladas: localStorage
+   * - jogadores: SOMENTE Supabase (fonte única da verdade)
    *
-   * Depois busca os jogadores do Supabase
-   * e combina as duas listas.
+   * Nada é recriado, inserido ou mesclado
+   * automaticamente aqui.
    */
   useEffect(() => {
     let cancelled = false;
 
     async function hydrate() {
-      const localDB = load();
+      const marcoladas =
+        loadLocalMarcoladas();
 
       try {
         const remotePlayers =
@@ -131,41 +124,9 @@ export function StoreProvider({
 
         if (cancelled) return;
 
-        remotePlayersRef.current =
-          remotePlayers;
-
-        const mergedPlayers =
-          new Map<string, Player>();
-
-        /*
-         * Supabase primeiro.
-         */
-        for (const player of remotePlayers) {
-          mergedPlayers.set(
-            player.id,
-            player,
-          );
-        }
-
-        /*
-         * Dados locais depois.
-         * Se o banco estiver vazio,
-         * Arthur, João Pedro etc.
-         * continuam existindo e serão
-         * enviados ao Supabase logo depois.
-         */
-        for (const player of localDB.players) {
-          mergedPlayers.set(
-            player.id,
-            player,
-          );
-        }
-
         setDb({
-          ...localDB,
-          players: Array.from(
-            mergedPlayers.values(),
-          ),
+          marcoladas,
+          players: remotePlayers,
         });
       } catch (error) {
         console.error(
@@ -174,7 +135,10 @@ export function StoreProvider({
         );
 
         if (!cancelled) {
-          setDb(localDB);
+          setDb({
+            marcoladas,
+            players: [],
+          });
         }
       } finally {
         if (!cancelled) {
@@ -189,6 +153,7 @@ export function StoreProvider({
       cancelled = true;
     };
   }, []);
+
 
   /*
    * localStorage continua funcionando
