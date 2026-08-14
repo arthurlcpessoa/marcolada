@@ -24,24 +24,27 @@ import {
 
 const KEY = "marcolada:v1";
 
-function load(): DB {
-  if (typeof window === "undefined") return emptyDB;
+/*
+ * O localStorage guarda APENAS as marcoladas
+ * (elas ainda não existem no Supabase).
+ * Jogadores vêm exclusivamente do Supabase.
+ */
+function loadLocalMarcoladas(): DB["marcoladas"] {
+  if (typeof window === "undefined") return [];
 
   try {
     const raw = window.localStorage.getItem(KEY);
 
-    if (!raw) return emptyDB;
+    if (!raw) return [];
 
-    const parsed = JSON.parse(raw) as DB;
+    const parsed = JSON.parse(raw) as Partial<DB>;
 
-    return {
-      players: parsed.players ?? [],
-      marcoladas: parsed.marcoladas ?? [],
-    };
+    return parsed.marcoladas ?? [];
   } catch {
-    return emptyDB;
+    return [];
   }
 }
+
 
 export const uid = () =>
   Math.random().toString(36).slice(2, 10);
@@ -73,6 +76,10 @@ type Ctx = {
     id: string,
     patch: Partial<Omit<Player, "id">>,
   ) => void;
+  deletePlayer: (
+    id: string,
+  ) => Promise<void>;
+
 };
 
 const StoreContext =
@@ -97,26 +104,19 @@ export function StoreProvider({
     useState<string[]>([]);
 
   /*
-   * Guarda a última lista de jogadores
-   * conhecida pelo Supabase.
-   * Assim conseguimos detectar criação,
-   * edição e exclusão.
-   */
-  const remotePlayersRef =
-    useRef<Player[]>([]);
-
-  /*
-   * Carrega primeiro o localStorage para
-   * preservar tudo que já existe.
+   * Hidratação:
+   * - marcoladas: localStorage
+   * - jogadores: SOMENTE Supabase (fonte única da verdade)
    *
-   * Depois busca os jogadores do Supabase
-   * e combina as duas listas.
+   * Nada é recriado, inserido ou mesclado
+   * automaticamente aqui.
    */
   useEffect(() => {
     let cancelled = false;
 
     async function hydrate() {
-      const localDB = load();
+      const marcoladas =
+        loadLocalMarcoladas();
 
       try {
         const remotePlayers =
@@ -124,41 +124,9 @@ export function StoreProvider({
 
         if (cancelled) return;
 
-        remotePlayersRef.current =
-          remotePlayers;
-
-        const mergedPlayers =
-          new Map<string, Player>();
-
-        /*
-         * Supabase primeiro.
-         */
-        for (const player of remotePlayers) {
-          mergedPlayers.set(
-            player.id,
-            player,
-          );
-        }
-
-        /*
-         * Dados locais depois.
-         * Se o banco estiver vazio,
-         * Arthur, João Pedro etc.
-         * continuam existindo e serão
-         * enviados ao Supabase logo depois.
-         */
-        for (const player of localDB.players) {
-          mergedPlayers.set(
-            player.id,
-            player,
-          );
-        }
-
         setDb({
-          ...localDB,
-          players: Array.from(
-            mergedPlayers.values(),
-          ),
+          marcoladas,
+          players: remotePlayers,
         });
       } catch (error) {
         console.error(
@@ -167,7 +135,10 @@ export function StoreProvider({
         );
 
         if (!cancelled) {
-          setDb(localDB);
+          setDb({
+            marcoladas,
+            players: [],
+          });
         }
       } finally {
         if (!cancelled) {
@@ -183,9 +154,12 @@ export function StoreProvider({
     };
   }, []);
 
+
   /*
-   * localStorage continua funcionando
-   * normalmente como backup/cache.
+   * localStorage guarda apenas as marcoladas.
+   * Jogadores NÃO são persistidos localmente
+   * para nunca "ressuscitarem" após um DELETE
+   * feito no Supabase.
    */
   useEffect(() => {
     if (!hydrated) return;
@@ -193,98 +167,15 @@ export function StoreProvider({
     try {
       window.localStorage.setItem(
         KEY,
-        JSON.stringify(db),
+        JSON.stringify({
+          marcoladas: db.marcoladas,
+        }),
       );
     } catch {
       /* quota */
     }
-  }, [db, hydrated]);
+  }, [db.marcoladas, hydrated]);
 
-  /*
-   * Sincronização simples dos jogadores.
-   *
-   * Novo jogador -> INSERT/UPSERT
-   * Estrelas/nome alterados -> UPSERT
-   * Jogador removido -> DELETE
-   */
-  useEffect(() => {
-    if (!hydrated) return;
-
-    const previous =
-      remotePlayersRef.current;
-
-    const current =
-      db.players;
-
-    const previousById =
-      new Map(
-        previous.map((player) => [
-          player.id,
-          player,
-        ]),
-      );
-
-    const currentById =
-      new Map(
-        current.map((player) => [
-          player.id,
-          player,
-        ]),
-      );
-
-    async function syncPlayers() {
-      try {
-        /*
-         * Criações e alterações.
-         */
-        for (const player of current) {
-          const old =
-            previousById.get(
-              player.id,
-            );
-
-          if (
-            !old ||
-            JSON.stringify(old) !==
-              JSON.stringify(player)
-          ) {
-            await savePlayer(player);
-          }
-        }
-
-        /*
-         * Exclusões.
-         */
-        for (const player of previous) {
-          if (
-            !currentById.has(
-              player.id,
-            )
-          ) {
-            await deletePlayerRemote(
-              player.id,
-            );
-          }
-        }
-
-        remotePlayersRef.current =
-          current.map((player) => ({
-            ...player,
-          }));
-
-        console.log(
-          "[Marcolada] Jogadores sincronizados com Supabase.",
-        );
-      } catch (error) {
-        console.error(
-          "[Marcolada] Erro ao sincronizar jogadores:",
-          error,
-        );
-      }
-    }
-
-    syncPlayers();
-  }, [db.players, hydrated]);
 
   const update = useCallback(
     (
@@ -372,6 +263,10 @@ export function StoreProvider({
       [update],
     );
 
+  /*
+   * Criação explícita do usuário:
+   * grava no Supabase e reflete localmente.
+   */
   const addPlayer = useCallback(
     (
       p: Omit<Player, "id">,
@@ -389,6 +284,15 @@ export function StoreProvider({
         ],
       }));
 
+      savePlayer(player).catch(
+        (error) => {
+          console.error(
+            "[Marcolada] Erro ao salvar jogador:",
+            error,
+          );
+        },
+      );
+
       return player;
     },
     [update],
@@ -402,22 +306,84 @@ export function StoreProvider({
           Omit<Player, "id">
         >,
       ) => {
+        let updated: Player | null =
+          null;
+
         update((d) => ({
           ...d,
           players:
             d.players.map(
-              (p) =>
-                p.id === id
-                  ? {
-                      ...p,
-                      ...patch,
-                    }
-                  : p,
+              (p) => {
+                if (p.id !== id)
+                  return p;
+
+                updated = {
+                  ...p,
+                  ...patch,
+                };
+
+                return updated;
+              },
+            ),
+        }));
+
+        setTimeout(() => {
+          if (updated) {
+            savePlayer(
+              updated,
+            ).catch((error) => {
+              console.error(
+                "[Marcolada] Erro ao atualizar jogador:",
+                error,
+              );
+            });
+          }
+        }, 0);
+      },
+      [update],
+    );
+
+  /*
+   * Exclusão: DELETE no Supabase primeiro,
+   * estado local só muda após sucesso.
+   */
+  const deletePlayer =
+    useCallback(
+      async (id: string) => {
+        await deletePlayerRemote(id);
+
+        update((d) => ({
+          ...d,
+          players: d.players.filter(
+            (p) => p.id !== id,
+          ),
+          marcoladas:
+            d.marcoladas.map((m) =>
+              m.status === "active"
+                ? {
+                    ...m,
+                    rosterIds:
+                      m.rosterIds.filter(
+                        (x) => x !== id,
+                      ),
+                    teams: m.teams.map(
+                      (t) => ({
+                        ...t,
+                        playerIds:
+                          t.playerIds.filter(
+                            (x) =>
+                              x !== id,
+                          ),
+                      }),
+                    ),
+                  }
+                : m,
             ),
         }));
       },
       [update],
     );
+
 
   const value = useMemo<Ctx>(
     () => ({
@@ -450,6 +416,7 @@ export function StoreProvider({
       deleteMarcolada,
       addPlayer,
       updatePlayer,
+      deletePlayer,
     }),
     [
       db,
@@ -461,7 +428,9 @@ export function StoreProvider({
       deleteMarcolada,
       addPlayer,
       updatePlayer,
+      deletePlayer,
     ],
+
   );
 
   return (

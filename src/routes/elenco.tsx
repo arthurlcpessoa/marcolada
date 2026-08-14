@@ -43,7 +43,7 @@ export const Route = createFileRoute("/elenco")({
 });
 
 function ElencoPage() {
-  const { db, hydrated, addPlayer, updatePlayer, update } = useStore();
+  const { db, hydrated, addPlayer, updatePlayer, deletePlayer } = useStore();
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Player | null>(null);
@@ -56,22 +56,15 @@ function ElencoPage() {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [db.players, query]);
 
-  const removeFromRegistry = (id: string) => {
-    update((d) => ({
-      ...d,
-      players: d.players.filter((p) => p.id !== id),
-      marcoladas: d.marcoladas.map((p) =>
-        p.status === "active"
-          ? {
-              ...p,
-              rosterIds: p.rosterIds.filter((x) => x !== id),
-              teams: p.teams.map((t) => ({ ...t, playerIds: t.playerIds.filter((x) => x !== id) })),
-            }
-          : p,
-      ),
-    }));
-    toast.success("Jogador removido do cadastro");
+  const removeFromRegistry = async (id: string) => {
+    try {
+      await deletePlayer(id);
+      toast.success("Jogador removido do cadastro");
+    } catch {
+      toast.error("Não foi possível excluir no banco de dados");
+    }
   };
+
 
   return (
     <main className="min-h-screen pb-28">
