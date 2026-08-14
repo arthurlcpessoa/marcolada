@@ -156,8 +156,10 @@ export function StoreProvider({
 
 
   /*
-   * localStorage continua funcionando
-   * normalmente como backup/cache.
+   * localStorage guarda apenas as marcoladas.
+   * Jogadores NÃO são persistidos localmente
+   * para nunca "ressuscitarem" após um DELETE
+   * feito no Supabase.
    */
   useEffect(() => {
     if (!hydrated) return;
@@ -165,98 +167,15 @@ export function StoreProvider({
     try {
       window.localStorage.setItem(
         KEY,
-        JSON.stringify(db),
+        JSON.stringify({
+          marcoladas: db.marcoladas,
+        }),
       );
     } catch {
       /* quota */
     }
-  }, [db, hydrated]);
+  }, [db.marcoladas, hydrated]);
 
-  /*
-   * Sincronização simples dos jogadores.
-   *
-   * Novo jogador -> INSERT/UPSERT
-   * Estrelas/nome alterados -> UPSERT
-   * Jogador removido -> DELETE
-   */
-  useEffect(() => {
-    if (!hydrated) return;
-
-    const previous =
-      remotePlayersRef.current;
-
-    const current =
-      db.players;
-
-    const previousById =
-      new Map(
-        previous.map((player) => [
-          player.id,
-          player,
-        ]),
-      );
-
-    const currentById =
-      new Map(
-        current.map((player) => [
-          player.id,
-          player,
-        ]),
-      );
-
-    async function syncPlayers() {
-      try {
-        /*
-         * Criações e alterações.
-         */
-        for (const player of current) {
-          const old =
-            previousById.get(
-              player.id,
-            );
-
-          if (
-            !old ||
-            JSON.stringify(old) !==
-              JSON.stringify(player)
-          ) {
-            await savePlayer(player);
-          }
-        }
-
-        /*
-         * Exclusões.
-         */
-        for (const player of previous) {
-          if (
-            !currentById.has(
-              player.id,
-            )
-          ) {
-            await deletePlayerRemote(
-              player.id,
-            );
-          }
-        }
-
-        remotePlayersRef.current =
-          current.map((player) => ({
-            ...player,
-          }));
-
-        console.log(
-          "[Marcolada] Jogadores sincronizados com Supabase.",
-        );
-      } catch (error) {
-        console.error(
-          "[Marcolada] Erro ao sincronizar jogadores:",
-          error,
-        );
-      }
-    }
-
-    syncPlayers();
-  }, [db.players, hydrated]);
 
   const update = useCallback(
     (
