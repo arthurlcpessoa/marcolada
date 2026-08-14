@@ -5,6 +5,16 @@ import { toast } from "sonner";
 import { Avatar, EmptyState, PageHeader, TeamDot } from "@/components/marcolada";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { newTeam, useStore } from "@/lib/store";
 import { displayName } from "@/lib/stats";
@@ -428,5 +438,93 @@ function TeamCard({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function DrawDialog({
+  totalPlayers,
+  defaultTeams,
+  onDraw,
+  trigger,
+}: {
+  totalPlayers: number;
+  defaultTeams: number;
+  onDraw: (teamCount: number, perTeam: number) => void;
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [teams, setTeams] = useState(String(defaultTeams));
+  const [perTeam, setPerTeam] = useState(
+    String(Math.max(1, Math.floor(totalPlayers / Math.max(2, defaultTeams))) || 5),
+  );
+
+  const teamCount = Number(teams) || 0;
+  const size = Number(perTeam) || 0;
+  const needed = teamCount * size;
+  const invalid = teamCount < 2 || size < 1;
+
+  const confirm = () => {
+    if (invalid) {
+      toast.error("Informe pelo menos 2 times e 1 jogador por time");
+      return;
+    }
+    onDraw(teamCount, size);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Sortear times</DialogTitle>
+          <DialogDescription>
+            {totalPlayers} jogador(es) no elenco desta marcolada.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Quantidade de times
+            </Label>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={2}
+              max={8}
+              value={teams}
+              onChange={(e) => setTeams(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Jogadores por time
+            </Label>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={11}
+              value={perTeam}
+              onChange={(e) => setPerTeam(e.target.value)}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {invalid
+            ? "Mínimo de 2 times e 1 jogador por time."
+            : needed > totalPlayers
+              ? `Faltam ${needed - totalPlayers} jogador(es) para completar todos os times — alguns ficarão incompletos.`
+              : needed < totalPlayers
+                ? `${totalPlayers - needed} jogador(es) ficarão sem time (reservas).`
+                : "Todos os jogadores serão escalados."}
+        </p>
+        <DialogFooter>
+          <Button onClick={confirm} disabled={invalid}>
+            <Shuffle className="h-4 w-4" /> Sortear
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
