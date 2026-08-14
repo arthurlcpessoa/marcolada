@@ -24,24 +24,27 @@ import {
 
 const KEY = "marcolada:v1";
 
-function load(): DB {
-  if (typeof window === "undefined") return emptyDB;
+/*
+ * O localStorage guarda APENAS as marcoladas
+ * (elas ainda não existem no Supabase).
+ * Jogadores vêm exclusivamente do Supabase.
+ */
+function loadLocalMarcoladas(): DB["marcoladas"] {
+  if (typeof window === "undefined") return [];
 
   try {
     const raw = window.localStorage.getItem(KEY);
 
-    if (!raw) return emptyDB;
+    if (!raw) return [];
 
-    const parsed = JSON.parse(raw) as DB;
+    const parsed = JSON.parse(raw) as Partial<DB>;
 
-    return {
-      players: parsed.players ?? [],
-      marcoladas: parsed.marcoladas ?? [],
-    };
+    return parsed.marcoladas ?? [];
   } catch {
-    return emptyDB;
+    return [];
   }
 }
+
 
 export const uid = () =>
   Math.random().toString(36).slice(2, 10);
