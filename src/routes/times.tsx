@@ -80,14 +80,17 @@ function TimesPage() {
     setPicked(null);
   };
 
-  const autoGenerate = () => {
-    const count = Math.max(2, marcolada.teams.length || 2);
-    const base: Team[] =
-      marcolada.teams.length >= 2
-        ? marcolada.teams.map((t) => ({ ...t, playerIds: [], captainId: undefined }))
-        : Array.from({ length: count }, (_, i) =>
-            newTeam(DEFAULT_NAMES[i] ?? `Time ${i + 1}`, TEAM_COLORS[i % TEAM_COLORS.length]!.value),
-          );
+  const autoGenerate = (teamCount?: number, perTeam?: number) => {
+    const count = Math.max(2, teamCount ?? marcolada.teams.length ?? 2);
+    const existing = marcolada.teams;
+    const base: Team[] = Array.from({ length: count }, (_, i) => {
+      const prev = existing[i];
+      return prev
+        ? { ...prev, playerIds: [], captainId: undefined }
+        : newTeam(DEFAULT_NAMES[i] ?? `Time ${i + 1}`, TEAM_COLORS[i % TEAM_COLORS.length]!.value);
+    });
+
+    const capacity = perTeam && perTeam > 0 ? perTeam : Infinity;
 
     // Sorteio balanceado: embaralha, ordena por estrelas (desc) e distribui
     // sempre para o time com menor soma de habilidade (e menos jogadores).
@@ -96,8 +99,14 @@ function TimesPage() {
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
 
     const buckets = base.map((t) => ({ team: t, sum: 0, size: 0 }));
+    let leftOut = 0;
     ranked.forEach((p) => {
-      const target = buckets.reduce((best, b) =>
+      const available = buckets.filter((b) => b.size < capacity);
+      if (available.length === 0) {
+        leftOut += 1;
+        return;
+      }
+      const target = available.reduce((best, b) =>
         b.size < best.size || (b.size === best.size && b.sum < best.sum) ? b : best,
       );
       target.team.playerIds.push(p.id);
@@ -108,11 +117,12 @@ function TimesPage() {
     setTeams(() => base);
     const totals = buckets.map((b) => b.sum);
     const diff = Math.max(...totals) - Math.min(...totals);
-    toast.success("Times sorteados", {
-      description:
-        diff === 0
-          ? "Equipes com a mesma força em estrelas."
-          : `Diferença de apenas ${diff.toFixed(0)} ${diff === 1 ? "estrela" : "estrelas"} entre os times.`,
+    const balance =
+      diff === 0
+        ? "Equipes com a mesma força em estrelas."
+        : `Diferença de apenas ${diff.toFixed(0)} ${diff === 1 ? "estrela" : "estrelas"} entre os times.`;
+    toast.success(`${count} times sorteados`, {
+      description: leftOut > 0 ? `${balance} ${leftOut} jogador(es) ficaram sem time.` : balance,
     });
   };
 
@@ -125,11 +135,19 @@ function TimesPage() {
         subtitle="Passo 3 de 3 · Escalações"
         back="/jogadores"
         action={
-          <Button variant="secondary" className="h-10" onClick={autoGenerate}>
-            <Shuffle className="h-4 w-4" /> Sortear
-          </Button>
+          <DrawDialog
+            totalPlayers={players.length}
+            defaultTeams={Math.max(2, marcolada.teams.length || 2)}
+            onDraw={autoGenerate}
+            trigger={
+              <Button variant="secondary" className="h-10">
+                <Shuffle className="h-4 w-4" /> Sortear
+              </Button>
+            }
+          />
         }
       />
+
 
       <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
         <div className="surface space-y-2 p-4">
