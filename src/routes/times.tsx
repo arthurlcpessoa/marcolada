@@ -5,6 +5,16 @@ import { toast } from "sonner";
 import { Avatar, EmptyState, PageHeader, TeamDot } from "@/components/marcolada";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { newTeam, useStore } from "@/lib/store";
 import { displayName } from "@/lib/stats";
@@ -80,14 +90,17 @@ function TimesPage() {
     setPicked(null);
   };
 
-  const autoGenerate = () => {
-    const count = Math.max(2, marcolada.teams.length || 2);
-    const base: Team[] =
-      marcolada.teams.length >= 2
-        ? marcolada.teams.map((t) => ({ ...t, playerIds: [], captainId: undefined }))
-        : Array.from({ length: count }, (_, i) =>
-            newTeam(DEFAULT_NAMES[i] ?? `Time ${i + 1}`, TEAM_COLORS[i % TEAM_COLORS.length]!.value),
-          );
+  const autoGenerate = (teamCount?: number, perTeam?: number) => {
+    const count = Math.max(2, teamCount ?? marcolada.teams.length ?? 2);
+    const existing = marcolada.teams;
+    const base: Team[] = Array.from({ length: count }, (_, i) => {
+      const prev = existing[i];
+      return prev
+        ? { ...prev, playerIds: [], captainId: undefined }
+        : newTeam(DEFAULT_NAMES[i] ?? `Time ${i + 1}`, TEAM_COLORS[i % TEAM_COLORS.length]!.value);
+    });
+
+    const capacity = perTeam && perTeam > 0 ? perTeam : Infinity;
 
     // Sorteio balanceado: embaralha, ordena por estrelas (desc) e distribui
     // sempre para o time com menor soma de habilidade (e menos jogadores).
@@ -96,8 +109,14 @@ function TimesPage() {
       .sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
 
     const buckets = base.map((t) => ({ team: t, sum: 0, size: 0 }));
+    let leftOut = 0;
     ranked.forEach((p) => {
-      const target = buckets.reduce((best, b) =>
+      const available = buckets.filter((b) => b.size < capacity);
+      if (available.length === 0) {
+        leftOut += 1;
+        return;
+      }
+      const target = available.reduce((best, b) =>
         b.size < best.size || (b.size === best.size && b.sum < best.sum) ? b : best,
       );
       target.team.playerIds.push(p.id);
@@ -108,11 +127,12 @@ function TimesPage() {
     setTeams(() => base);
     const totals = buckets.map((b) => b.sum);
     const diff = Math.max(...totals) - Math.min(...totals);
-    toast.success("Times sorteados", {
-      description:
-        diff === 0
-          ? "Equipes com a mesma força em estrelas."
-          : `Diferença de apenas ${diff.toFixed(0)} ${diff === 1 ? "estrela" : "estrelas"} entre os times.`,
+    const balance =
+      diff === 0
+        ? "Equipes com a mesma força em estrelas."
+        : `Diferença de apenas ${diff.toFixed(0)} ${diff === 1 ? "estrela" : "estrelas"} entre os times.`;
+    toast.success(`${count} times sorteados`, {
+      description: leftOut > 0 ? `${balance} ${leftOut} jogador(es) ficaram sem time.` : balance,
     });
   };
 
@@ -125,11 +145,19 @@ function TimesPage() {
         subtitle="Passo 3 de 3 · Escalações"
         back="/jogadores"
         action={
-          <Button variant="secondary" className="h-10" onClick={autoGenerate}>
-            <Shuffle className="h-4 w-4" /> Sortear
-          </Button>
+          <DrawDialog
+            totalPlayers={players.length}
+            defaultTeams={Math.max(2, marcolada.teams.length || 2)}
+            onDraw={autoGenerate}
+            trigger={
+              <Button variant="secondary" className="h-10">
+                <Shuffle className="h-4 w-4" /> Sortear
+              </Button>
+            }
+          />
         }
       />
+
 
       <div className="mx-auto max-w-3xl space-y-4 px-4 py-5">
         <div className="surface space-y-2 p-4">
@@ -191,9 +219,13 @@ function TimesPage() {
             action={
               <div className="flex flex-wrap justify-center gap-2">
                 <Button onClick={addTeam}>Criar time</Button>
-                <Button variant="secondary" onClick={autoGenerate}>
-                  Sortear times
-                </Button>
+                <DrawDialog
+                  totalPlayers={players.length}
+                  defaultTeams={2}
+                  onDraw={autoGenerate}
+                  trigger={<Button variant="secondary">Sortear times</Button>}
+                />
+
               </div>
             }
           />
@@ -406,5 +438,93 @@ function TeamCard({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function DrawDialog({
+  totalPlayers,
+  defaultTeams,
+  onDraw,
+  trigger,
+}: {
+  totalPlayers: number;
+  defaultTeams: number;
+  onDraw: (teamCount: number, perTeam: number) => void;
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [teams, setTeams] = useState(String(defaultTeams));
+  const [perTeam, setPerTeam] = useState(
+    String(Math.max(1, Math.floor(totalPlayers / Math.max(2, defaultTeams))) || 5),
+  );
+
+  const teamCount = Number(teams) || 0;
+  const size = Number(perTeam) || 0;
+  const needed = teamCount * size;
+  const invalid = teamCount < 2 || size < 1;
+
+  const confirm = () => {
+    if (invalid) {
+      toast.error("Informe pelo menos 2 times e 1 jogador por time");
+      return;
+    }
+    onDraw(teamCount, size);
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Sortear times</DialogTitle>
+          <DialogDescription>
+            {totalPlayers} jogador(es) no elenco desta marcolada.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Quantidade de times
+            </Label>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={2}
+              max={8}
+              value={teams}
+              onChange={(e) => setTeams(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              Jogadores por time
+            </Label>
+            <Input
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={11}
+              value={perTeam}
+              onChange={(e) => setPerTeam(e.target.value)}
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {invalid
+            ? "Mínimo de 2 times e 1 jogador por time."
+            : needed > totalPlayers
+              ? `Faltam ${needed - totalPlayers} jogador(es) para completar todos os times — alguns ficarão incompletos.`
+              : needed < totalPlayers
+                ? `${totalPlayers - needed} jogador(es) ficarão sem time (reservas).`
+                : "Todos os jogadores serão escalados."}
+        </p>
+        <DialogFooter>
+          <Button onClick={confirm} disabled={invalid}>
+            <Shuffle className="h-4 w-4" /> Sortear
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
