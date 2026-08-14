@@ -78,22 +78,15 @@ function JogadoresPage() {
     }));
   };
 
-  const removeFromRegistry = (id: string) => {
-    update((d) => ({
-      ...d,
-      players: d.players.filter((p) => p.id !== id),
-      marcoladas: d.marcoladas.map((p) =>
-        p.status === "active"
-          ? {
-              ...p,
-              rosterIds: p.rosterIds.filter((x) => x !== id),
-              teams: p.teams.map((t) => ({ ...t, playerIds: t.playerIds.filter((x) => x !== id) })),
-            }
-          : p,
-      ),
-    }));
-    toast.success("Jogador removido do cadastro");
+  const removeFromRegistry = async (id: string) => {
+    try {
+      await deletePlayer(id);
+      toast.success("Jogador removido do cadastro");
+    } catch {
+      toast.error("Não foi possível excluir no banco de dados");
+    }
   };
+
 
   return (
     <main className="min-h-screen pb-28">
