@@ -270,7 +270,7 @@ export async function saveMarcolada(m: Marcolada): Promise<void> {
         adjust_b: mt.adjust?.b ?? 0,
         started_at: mt.startedAt,
         ended_at: mt.endedAt ?? null,
-        elapsed: mt.elapsed ?? 0,
+        elapsed: Math.round(mt.elapsed ?? 0),
         running_since: mt.runningSince ?? null,
       })),
     );
