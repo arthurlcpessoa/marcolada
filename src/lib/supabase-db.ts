@@ -67,7 +67,8 @@ export async function deletePlayerRemote(id: string): Promise<void> {
  * Marcoladas (marcoladas + teams + matches + goals + tabelas de liga) *
  * ------------------------------------------------------------------ */
 
-type Row = Record<string, any>;
+/* eslint-disable @typescript-eslint/no-explicit-any */
+type Row = any;
 
 function toMarcolada(
   row: Row,
