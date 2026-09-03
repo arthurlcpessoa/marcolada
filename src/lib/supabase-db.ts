@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { Player } from "./types";
+import type { GoalEvent, Marcolada, Match, Player, Team, TeamMode } from "./types";
 
 export async function loadPlayers(): Promise<Player[]> {
   const { data, error } = await supabase
@@ -66,8 +66,6 @@ export async function deletePlayerRemote(id: string): Promise<void> {
 /* ------------------------------------------------------------------ *
  * Marcoladas (marcoladas + teams + matches + goals + tabelas de liga) *
  * ------------------------------------------------------------------ */
-
-import type { GoalEvent, Marcolada, Match, Team, TeamMode } from "./types";
 
 type Row = Record<string, any>;
 
