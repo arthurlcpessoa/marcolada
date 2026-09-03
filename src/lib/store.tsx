@@ -17,17 +17,20 @@ import {
   type Team,
 } from "./types";
 import {
+  deleteMarcoladaRemote,
   deletePlayerRemote,
+  loadMarcoladas,
   loadPlayers,
+  saveMarcolada,
   savePlayer,
 } from "./supabase-db";
 
 const KEY = "marcolada:v1";
 
 /*
- * O localStorage guarda APENAS as marcoladas
- * (elas ainda não existem no Supabase).
- * Jogadores vêm exclusivamente do Supabase.
+ * O localStorage é usado apenas para migrar marcoladas
+ * antigas para o Supabase (uma única vez).
+ * A fonte da verdade é o Supabase.
  */
 function loadLocalMarcoladas(): DB["marcoladas"] {
   if (typeof window === "undefined") return [];
@@ -44,6 +47,7 @@ function loadLocalMarcoladas(): DB["marcoladas"] {
     return [];
   }
 }
+
 
 
 export const uid = () =>
