@@ -312,9 +312,21 @@ export function StoreProvider({
           }),
           "Excluir marcolada",
         );
+
+        saved.current.delete(id);
+
+        deleteMarcoladaRemote(id).catch(
+          (error) => {
+            console.error(
+              "[Marcolada] Erro ao excluir marcolada:",
+              error,
+            );
+          },
+        );
       },
       [update],
     );
+
 
   /*
    * Criação explícita do usuário:
