@@ -108,39 +108,80 @@ export function StoreProvider({
     useState<string[]>([]);
 
   /*
-   * Hidratação:
-   * - marcoladas: localStorage
-   * - jogadores: SOMENTE Supabase (fonte única da verdade)
-   *
-   * Nada é recriado, inserido ou mesclado
-   * automaticamente aqui.
+   * Hidratação: jogadores E marcoladas vêm do Supabase
+   * (fonte única da verdade). Marcoladas que ainda estavam
+   * apenas no localStorage são migradas uma única vez.
    */
+  const saved = useRef<Map<string, string>>(new Map());
+
   useEffect(() => {
     let cancelled = false;
 
     async function hydrate() {
-      const marcoladas =
-        loadLocalMarcoladas();
-
       try {
-        const remotePlayers =
-          await loadPlayers();
+        const [remotePlayers, remoteMarcoladas] =
+          await Promise.all([
+            loadPlayers(),
+            loadMarcoladas(),
+          ]);
 
         if (cancelled) return;
 
+        // Migração única do localStorage → Supabase
+        const locals = loadLocalMarcoladas();
+        const missing = locals.filter(
+          (l) =>
+            !remoteMarcoladas.some(
+              (r) => r.id === l.id,
+            ),
+        );
+
+        for (const m of missing) {
+          try {
+            await saveMarcolada(m);
+            remoteMarcoladas.push(m);
+          } catch (error) {
+            console.error(
+              "[Marcolada] Falha ao migrar marcolada para o Supabase:",
+              error,
+            );
+          }
+        }
+
+        if (locals.length) {
+          try {
+            window.localStorage.removeItem(KEY);
+          } catch {
+            /* noop */
+          }
+        }
+
+        if (cancelled) return;
+
+        const list = remoteMarcoladas.sort(
+          (a, b) => b.createdAt - a.createdAt,
+        );
+
+        saved.current = new Map(
+          list.map((m) => [
+            m.id,
+            JSON.stringify(m),
+          ]),
+        );
+
         setDb({
-          marcoladas,
+          marcoladas: list,
           players: remotePlayers,
         });
       } catch (error) {
         console.error(
-          "[Marcolada] Não foi possível carregar jogadores do Supabase:",
+          "[Marcolada] Não foi possível carregar dados do Supabase:",
           error,
         );
 
         if (!cancelled) {
           setDb({
-            marcoladas,
+            marcoladas: [],
             players: [],
           });
         }
@@ -160,25 +201,33 @@ export function StoreProvider({
 
 
   /*
-   * localStorage guarda apenas as marcoladas.
-   * Jogadores NÃO são persistidos localmente
-   * para nunca "ressuscitarem" após um DELETE
-   * feito no Supabase.
+   * Autosave: grava no Supabase apenas as marcoladas
+   * que realmente mudaram (com debounce).
    */
   useEffect(() => {
     if (!hydrated) return;
 
-    try {
-      window.localStorage.setItem(
-        KEY,
-        JSON.stringify({
-          marcoladas: db.marcoladas,
-        }),
-      );
-    } catch {
-      /* quota */
-    }
+    const timer = setTimeout(() => {
+      db.marcoladas.forEach((m) => {
+        const snapshot = JSON.stringify(m);
+
+        if (saved.current.get(m.id) === snapshot) return;
+
+        saved.current.set(m.id, snapshot);
+
+        saveMarcolada(m).catch((error) => {
+          saved.current.delete(m.id);
+          console.error(
+            "[Marcolada] Erro ao salvar marcolada:",
+            error,
+          );
+        });
+      });
+    }, 700);
+
+    return () => clearTimeout(timer);
   }, [db.marcoladas, hydrated]);
+
 
 
   const update = useCallback(
